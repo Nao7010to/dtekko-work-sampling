@@ -272,6 +272,28 @@ th:first-child,td:first-child{text-align:left}
   .category-settings{grid-template-columns:1fr}
 }
 
+
+.auto-save-status{display:flex;align-items:center;gap:6px;font-size:11px;color:#166534;font-weight:800;margin-top:7px}
+.auto-save-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block}
+.export-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+.template-tools{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:7px;margin-top:9px}
+.template-editor-note{background:#f8fafc;border:1px dashed var(--border);border-radius:10px;padding:9px;margin-top:9px}
+.trash-toggle-wrap{display:flex;justify-content:flex-end;margin-top:8px}
+.trash-toggle{font-size:10px;min-height:30px;padding:5px 9px;color:#64748b;background:#f8fafc}
+.trash-panel{display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
+.trash-panel.open{display:block}
+.trash-section{margin-top:9px}
+.trash-section-title{font-size:11px;font-weight:900;color:#475569;margin-bottom:5px}
+.trash-row{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:7px;margin-bottom:5px;background:#fafafa}
+.trash-row span{font-size:11px}
+.rating-bulk-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:7px;align-items:end}
+.rating-bulk-grid .field-label{display:block;font-size:10px;color:#64748b;font-weight:800;margin:0 0 4px}
+.rating-target-count{font-size:11px;color:#475569;margin-top:8px;font-weight:800}
+.output-note{font-size:10px;color:#64748b;margin-top:7px;line-height:1.5}
+.busy-overlay{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.busy-overlay.open{display:flex}
+.busy-box{background:#fff;border-radius:16px;padding:22px 26px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-weight:900;text-align:center}
+@media(max-width:800px){.export-actions,.template-tools,.rating-bulk-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -345,10 +367,10 @@ th:first-child,td:first-child{text-align:left}
   <div class="card">
     <div class="actions">
       <button class="action" id="undoBtn">↩ 直前取消</button>
-      <button class="action primary" id="saveBtn">保存</button>
       <button class="action" id="summaryBtn">集計を見る</button>
       <button class="action" id="csvBtn">CSV</button>
     </div>
+    <div class="auto-save-status"><span class="auto-save-dot"></span>自動保存済み</div>
     <p class="small">赤い「−」は、現在選択中の工場・作業者について、その作業項目の直近1件を削除します。</p>
   </div>
 </section>
@@ -518,12 +540,16 @@ th:first-child,td:first-child{text-align:left}
       <input id="renameInput" placeholder="データ名">
       <button class="action" id="renameBtn">名称変更</button>
     </div>
-    <div class="actions">
-      <button class="action primary" id="saveSessionBtn">保存</button>
+    <div class="auto-save-status"><span class="auto-save-dot"></span>変更内容は自動保存されます</div>
+    <div class="export-actions">
       <button class="action" id="csvSessionBtn">CSV出力</button>
-      <button class="action danger-text" id="clearBtn">現在データ消去</button>
-      <button class="action" id="backupBtn">バックアップ</button>
+      <button class="action primary" id="excelBtn">Excel出力</button>
+      <button class="action primary" id="pptBtn">PPT提案資料化</button>
     </div>
+    <div class="actions" style="margin-top:7px">
+      <button class="action danger-text" id="clearBtn">現在データ消去</button>
+    </div>
+    <div class="output-note">Excel/PPTは現在開いている保存データだけを対象に出力します。別の保存データは混ざりません。</div>
   </div>
 
   <div class="card">
@@ -531,15 +557,19 @@ th:first-child,td:first-child{text-align:left}
     <p class="small">テンプレートは現在の測定データ専用の作業項目としてコピーされます。元テンプレート自体は変更されません。</p>
 
     <div class="template-bar">
-      <select id="templateSelect">
-        <option value="generic">汎用</option>
-        <option value="steel">鉄工</option>
-        <option value="food">食品</option>
-        <option value="assembly">組立</option>
-        <option value="blank">空白</option>
-      </select>
+      <select id="templateSelect"></select>
       <button class="action primary" id="applyTemplateBtn">テンプレートを適用</button>
     </div>
+    <div class="template-tools">
+      <input id="templateNameInput" placeholder="テンプレート名">
+      <button class="action" id="renameTemplateBtn">名前変更</button>
+      <button class="action" id="saveTemplateBtn">現在の項目で更新</button>
+      <button class="action primary" id="addTemplateBtn">＋ 新規テンプレート登録</button>
+    </div>
+    <div class="template-tools" style="grid-template-columns:1fr">
+      <button class="action danger-text" id="deleteTemplateBtn">選択テンプレートを削除</button>
+    </div>
+    <div class="template-editor-note small">自作テンプレートは保存データをまたいで共通利用できます。適用後の作業項目は、その保存データ専用のコピーとして独立します。</div>
     <p class="small template-note">観測データがある状態では既存項目を上書きせず、新しい測定データを作成してテンプレートを適用します。</p>
 
     <div class="category-settings">
@@ -573,6 +603,23 @@ th:first-child,td:first-child{text-align:left}
   </div>
 
   <div class="card">
+    <div class="section-title">レーティング一括変更</div>
+    <p class="small">現在開いている保存データだけが対象です。工場・作業者・工場×作業者を指定して、過去の観測レーティングをまとめて変更できます。</p>
+    <div class="rating-bulk-grid">
+      <div><span class="field-label">対象</span><select id="bulkRatingScope">
+        <option value="all">全観測</option><option value="factory">工場</option><option value="worker">作業者</option><option value="factoryWorker">工場 × 作業者</option>
+      </select></div>
+      <div><span class="field-label">工場</span><select id="bulkRatingFactory"></select></div>
+      <div><span class="field-label">作業者</span><select id="bulkRatingWorker"></select></div>
+      <div><span class="field-label">変更後</span><select id="bulkRatingValue">
+        <option value="50">50%</option><option value="80">80%</option><option value="100" selected>100%</option><option value="120">120%</option>
+      </select></div>
+      <button class="action primary" id="bulkRatingApplyBtn">一括変更</button>
+    </div>
+    <div class="rating-target-count" id="bulkRatingCount">対象：0件</div>
+  </div>
+
+  <div class="card">
     <div class="section-title">工場設定</div>
     <p class="small">この保存データ専用の設定です。新規作成・過去データの呼び出しを含め、他の保存データとは完全に独立します。観測済みの工場は「使用終了」で過去データを残せます。</p>
     <div class="entity-list" id="factorySettingsList"></div>
@@ -601,8 +648,17 @@ th:first-child,td:first-child{text-align:left}
       <select id="clearFactorySelect" aria-label="クリアする工場"></select>
       <button id="clearFactoryBtn" class="danger-action">選択工場の観測データをクリア</button>
     </div>
-    <div class="danger-note">※削除後は元に戻せません。必要に応じて先にJSONバックアップを保存してください。</div>
+    <div class="danger-note">※観測データのクリアは元に戻せません。実行前に対象工場と件数を必ず確認してください。</div>
   </div>
+
+<div class="trash-toggle-wrap">
+      <button class="action trash-toggle" id="trashToggleBtn">削除済み</button>
+    </div>
+    <div class="trash-panel" id="trashPanel">
+      <div class="section-title">削除済みデータ</div>
+      <div class="small">誤って削除した項目・工場・作業者・保存データ・テンプレートをここから復活できます。</div>
+      <div id="trashContents"></div>
+    </div>
 
 <div class="section-title">保存済みデータ</div>
     <div class="session-list" id="sessionList"></div>
@@ -610,6 +666,7 @@ th:first-child,td:first-child{text-align:left}
 </section>
 
 </div>
+<div class="busy-overlay" id="busyOverlay"><div class="busy-box" id="busyText">出力中…</div></div>
 
 <script>
 "use strict";
@@ -680,9 +737,26 @@ const WORK_TEMPLATES = {
 };
 
 function cloneTemplate(key){
-  const src=(WORK_TEMPLATES[key]||WORK_TEMPLATES.generic).items;
+  const lib=(typeof db!=="undefined" && Array.isArray(db.templates)) ? db.templates.find(t=>t.id===key) : null;
+  const src=(lib?.items) || (WORK_TEMPLATES[key]||WORK_TEMPLATES.generic).items;
   return src.map(c=>({type:c.type,label:c.label}));
 }
+
+
+function defaultTemplateLibrary(){
+  return Object.entries(WORK_TEMPLATES).map(([id,t])=>({
+    id,name:t.name,items:t.items.map(c=>({type:c.type,label:c.label})),builtIn:true
+  }));
+}
+function ensureTemplateLibrary(){
+  if(!Array.isArray(db.templates)||db.templates.length===0) db.templates=defaultTemplateLibrary();
+  if(!Array.isArray(db.deletedTemplates)) db.deletedTemplates=[];
+}
+function getTemplateById(id){
+  ensureTemplateLibrary();
+  return db.templates.find(t=>t.id===id)||db.templates[0]||null;
+}
+function makeId(prefix){return prefix+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);}
 
 const STORE_KEY = "dtekko_ws_stable_v6";
 
@@ -702,7 +776,6 @@ const els = {
   supportGrid: document.getElementById("supportGrid"),
   lossGrid: document.getElementById("lossGrid"),
   undoBtn: document.getElementById("undoBtn"),
-  saveBtn: document.getElementById("saveBtn"),
   summaryBtn: document.getElementById("summaryBtn"),
   csvBtn: document.getElementById("csvBtn"),
   filterFactory: document.getElementById("filterFactory"),
@@ -726,10 +799,10 @@ const els = {
   newSessionBtn: document.getElementById("newSessionBtn"),
   renameInput: document.getElementById("renameInput"),
   renameBtn: document.getElementById("renameBtn"),
-  saveSessionBtn: document.getElementById("saveSessionBtn"),
   csvSessionBtn: document.getElementById("csvSessionBtn"),
+  excelBtn: document.getElementById("excelBtn"),
+  pptBtn: document.getElementById("pptBtn"),
   clearBtn: document.getElementById("clearBtn"),
-  backupBtn: document.getElementById("backupBtn"),
   sessionList: document.getElementById("sessionList"),
   sessionLabel: document.getElementById("sessionLabel"),
   factorySettingsList: document.getElementById("factorySettingsList"),
@@ -753,7 +826,23 @@ const els = {
   newLossItem: document.getElementById("newLossItem"),
   addValueItemBtn: document.getElementById("addValueItemBtn"),
   addSupportItemBtn: document.getElementById("addSupportItemBtn"),
-  addLossItemBtn: document.getElementById("addLossItemBtn")
+  addLossItemBtn: document.getElementById("addLossItemBtn"),
+  templateNameInput: document.getElementById("templateNameInput"),
+  renameTemplateBtn: document.getElementById("renameTemplateBtn"),
+  saveTemplateBtn: document.getElementById("saveTemplateBtn"),
+  addTemplateBtn: document.getElementById("addTemplateBtn"),
+  deleteTemplateBtn: document.getElementById("deleteTemplateBtn"),
+  trashToggleBtn: document.getElementById("trashToggleBtn"),
+  trashPanel: document.getElementById("trashPanel"),
+  trashContents: document.getElementById("trashContents"),
+  bulkRatingScope: document.getElementById("bulkRatingScope"),
+  bulkRatingFactory: document.getElementById("bulkRatingFactory"),
+  bulkRatingWorker: document.getElementById("bulkRatingWorker"),
+  bulkRatingValue: document.getElementById("bulkRatingValue"),
+  bulkRatingApplyBtn: document.getElementById("bulkRatingApplyBtn"),
+  bulkRatingCount: document.getElementById("bulkRatingCount"),
+  busyOverlay: document.getElementById("busyOverlay"),
+  busyText: document.getElementById("busyText")
 };
 
 let db = {
@@ -823,6 +912,10 @@ function ensureSessionIsolation(sess, legacy){
   }
   if(!Array.isArray(sess.inactiveFactories)) sess.inactiveFactories=[];
   if(!Array.isArray(sess.inactiveWorkers)) sess.inactiveWorkers=[];
+  if(!sess.deletedMasters || typeof sess.deletedMasters!=="object") sess.deletedMasters={factories:[],workers:[]};
+  if(!Array.isArray(sess.deletedMasters.factories)) sess.deletedMasters.factories=[];
+  if(!Array.isArray(sess.deletedMasters.workers)) sess.deletedMasters.workers=[];
+  if(!Array.isArray(sess.deletedCategories)) sess.deletedCategories=[];
 
   if(!Array.isArray(sess.categories)) sess.categories=cloneTemplate("steel");
   if(!Array.isArray(sess.inactiveCategories)) sess.inactiveCategories=[];
@@ -882,6 +975,8 @@ function loadDB(){
 
   if(!db || typeof db!=="object") db={currentId:null,sessions:{}};
   if(!db.sessions || typeof db.sessions!=="object") db.sessions={};
+  if(!Array.isArray(db.deletedSessions)) db.deletedSessions=[];
+  ensureTemplateLibrary();
 
   // Capture old shared masters only for one-time migration.
   const legacy={
@@ -1104,9 +1199,12 @@ function syncControlsFromSession(){
     b.classList.toggle("active",b.dataset.compareMode===compareMode);
   });
 
-  if(els.templateSelect && WORK_TEMPLATES[sess.templateKey]){
-    els.templateSelect.value=sess.templateKey;
+  refreshTemplateSelect(sess.templateKey);
+  if(els.templateNameInput){
+    const tpl=getTemplateById(els.templateSelect.value);
+    els.templateNameInput.value=tpl?tpl.name:"";
   }
+  refreshBulkRatingControls();
 }
 
 function refreshSelectors(){
@@ -1598,20 +1696,7 @@ function renderSessions(){
     const del = document.createElement("button");
     del.className = "action danger-text";
     del.textContent = "削除";
-    del.addEventListener("click", () => {
-      if(Object.keys(db.sessions).length <= 1){
-        alert("最低1件は残してください");
-        return;
-      }
-      if(confirm("「"+s.name+"」を削除しますか？")){
-        const wasCurrent=db.currentId===s.id;
-        delete db.sessions[s.id];
-        const fallback=Object.keys(db.sessions)[0];
-        saveDB();
-        if(wasCurrent) activateSession(fallback,{goMeasure:true});
-        else renderAll();
-      }
-    });
+    del.addEventListener("click",()=>softDeleteSession(s.id));
 
     row.appendChild(meta);
     row.appendChild(open);
@@ -1631,6 +1716,8 @@ function renderAll(){
   renderSettings();
   renderItemSettings();
   renderInfo();
+  renderTrash();
+  refreshBulkRatingControls();
   if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
   refreshClearFactorySelector();
 }
@@ -1774,15 +1861,7 @@ function setMasterActive(kind,name,makeActive){
 }
 
 function deleteMaster(kind,name){
-  const n=masterObservationCount(kind,name);
-  if(n>0){alert("この"+(kind==="factory"?"工場":"作業者")+"には観測データが"+n+"件あるため削除できません。\\n過去データを残す場合は「使用終了」を使ってください。");return;}
-  const {active,inactive}=masterLists(kind);
-  if(active.includes(name)&&active.length<=1){alert((kind==="factory"?"工場":"作業者")+"は最低1件必要です");return;}
-  if(!confirm("「"+name+"」を削除しますか？"))return;
-  let i=active.indexOf(name);if(i>=0)active.splice(i,1);
-  i=inactive.indexOf(name);if(i>=0)inactive.splice(i,1);
-  repairSessionUi();
-  saveDB();refreshSelectors();renderSettings();renderAll();
+  softDeleteMaster(kind,name);
 }
 
 function masterRow(kind,name,isActive){
@@ -1898,18 +1977,15 @@ function setWorkItemActive(type,label,makeActive){
 function deleteWorkItem(type,label){
   const n=itemObservationCount(type,label);
   if(n>0){
-    alert("「"+label+"」には観測データが"+n+"件あるため削除できません。\\n過去データを残す場合は「使用終了」を使ってください。");
+    alert("「"+label+"」には観測データが"+n+"件あるため削除できません。\n過去データを残す場合は「使用終了」を使ってください。");
     return;
   }
-  if(!confirm("「"+label+"」を削除しますか？")) return;
+  if(!confirm("「"+label+"」を削除しますか？\n削除済みから復活できます。"))return;
   const sess=currentSession();
   sess.categories=(sess.categories||[]).filter(c=>!(c.type===type&&c.label===label));
   sess.inactiveCategories=(sess.inactiveCategories||[]).filter(c=>!(c.type===type&&c.label===label));
-  sess.updated=new Date().toISOString();
-  saveDB();
-  buildWorkButtons();
-  renderItemSettings();
-  renderAll();
+  sess.deletedCategories.push({type,label,deletedAt:new Date().toISOString()});
+  sess.updated=new Date().toISOString();saveDB();renderAll();renderTrash();
 }
 
 function itemSettingRow(item,isActive){
@@ -1966,9 +2042,218 @@ function renderItemSettings(){
   });
 }
 
+
+function refreshTemplateSelect(preferred){
+  if(!els.templateSelect)return;
+  ensureTemplateLibrary();
+  const current=preferred||els.templateSelect.value;
+  els.templateSelect.innerHTML="";
+  db.templates.forEach(t=>{
+    const o=document.createElement("option");o.value=t.id;o.textContent=t.name;els.templateSelect.appendChild(o);
+  });
+  const ids=db.templates.map(t=>t.id);
+  els.templateSelect.value=ids.includes(current)?current:(ids[0]||"");
+}
+function currentTemplate(){return getTemplateById(els.templateSelect.value);}
+function addTemplateFromCurrent(){
+  const name=els.templateNameInput.value.trim();
+  if(!name){alert("テンプレート名を入力してください。");return;}
+  ensureTemplateLibrary();
+  if(db.templates.some(t=>t.name===name)){alert("同じテンプレート名がすでにあります。");return;}
+  const t={id:makeId("tpl"),name,items:activeCategories().map(c=>({type:c.type,label:c.label})),builtIn:false};
+  db.templates.push(t);saveDB();refreshTemplateSelect(t.id);renderTrash();
+  alert("「"+name+"」をテンプレートとして登録しました。");
+}
+function renameSelectedTemplate(){
+  const t=currentTemplate();if(!t)return;
+  const name=els.templateNameInput.value.trim();if(!name||name===t.name)return;
+  if(db.templates.some(x=>x.id!==t.id&&x.name===name)){alert("同じテンプレート名がすでにあります。");return;}
+  if(!confirm("テンプレート「"+t.name+"」の名前を「"+name+"」へ変更しますか？"))return;
+  t.name=name;saveDB();refreshTemplateSelect(t.id);
+}
+function overwriteSelectedTemplate(){
+  const t=currentTemplate();if(!t)return;
+  if(!confirm("テンプレート「"+t.name+"」を、現在の保存データの作業項目で更新しますか？\n\nこの変更はテンプレートライブラリ全体に記憶されます。"))return;
+  t.items=activeCategories().map(c=>({type:c.type,label:c.label}));saveDB();alert("テンプレートを更新しました。");
+}
+function deleteSelectedTemplate(){
+  const t=currentTemplate();if(!t)return;
+  if(db.templates.length<=1){alert("テンプレートは最低1件必要です。");return;}
+  if(!confirm("テンプレート「"+t.name+"」を削除しますか？\n削除済みから復活できます。"))return;
+  db.templates=db.templates.filter(x=>x.id!==t.id);
+  db.deletedTemplates.push({...t,deletedAt:new Date().toISOString()});
+  Object.values(db.sessions).forEach(sess=>{if(sess.templateKey===t.id)sess.templateKey=(db.templates[0]||{}).id||"generic";});
+  saveDB();refreshTemplateSelect();renderTrash();renderAll();
+}
+function restoreTemplate(id){
+  const i=db.deletedTemplates.findIndex(t=>t.id===id);if(i<0)return;
+  const t=db.deletedTemplates.splice(i,1)[0];delete t.deletedAt;
+  if(db.templates.some(x=>x.name===t.name))t.name=t.name+"（復活）";
+  db.templates.push(t);saveDB();refreshTemplateSelect(t.id);renderTrash();renderAll();
+}
+function softDeleteMaster(kind,name){
+  const n=masterObservationCount(kind,name);
+  if(n>0){alert("この"+(kind==="factory"?"工場":"作業者")+"には観測データが"+n+"件あるため削除できません。\n過去データを残す場合は「使用終了」を使ってください。");return;}
+  const {active,inactive}=masterLists(kind);
+  if(active.includes(name)&&active.length<=1){alert((kind==="factory"?"工場":"作業者")+"は最低1件必要です");return;}
+  if(!confirm("「"+name+"」を削除しますか？\n削除済みから復活できます。"))return;
+  let i=active.indexOf(name);if(i>=0)active.splice(i,1);
+  i=inactive.indexOf(name);if(i>=0)inactive.splice(i,1);
+  const key=kind==="factory"?"factories":"workers";
+  currentSession().deletedMasters[key].push({name,deletedAt:new Date().toISOString()});
+  repairSessionUi();saveDB();renderAll();renderTrash();
+}
+function restoreMaster(kind,name){
+  const sess=currentSession(),key=kind==="factory"?"factories":"workers",arr=sess.deletedMasters[key]||[];
+  const i=arr.findIndex(x=>x.name===name);if(i<0)return;
+  let restored=arr.splice(i,1)[0].name;
+  if(nameExists(kind,restored))restored=restored+"（復活）";
+  masterLists(kind).active.push(restored);repairSessionUi();saveDB();renderAll();renderTrash();
+}
+function restoreWorkItem(type,label){
+  const sess=currentSession(),i=(sess.deletedCategories||[]).findIndex(c=>c.type===type&&c.label===label);if(i<0)return;
+  const item=sess.deletedCategories.splice(i,1)[0];delete item.deletedAt;
+  let newLabel=item.label;if(categoryNameExists(type,newLabel))newLabel=newLabel+"（復活）";
+  sess.categories.push({type,label:newLabel});saveDB();renderAll();renderTrash();
+}
+function softDeleteSession(id){
+  const sess=db.sessions[id];if(!sess)return;
+  if(Object.keys(db.sessions).length<=1){alert("保存データは最低1件必要です。");return;}
+  if(!confirm("保存データ「"+sess.name+"」を削除しますか？\n削除済みから復活できます。"))return;
+  db.deletedSessions.push({...sess,deletedAt:new Date().toISOString()});
+  const wasCurrent=db.currentId===id;delete db.sessions[id];
+  const fallback=Object.keys(db.sessions)[0];saveDB();
+  if(wasCurrent)activateSession(fallback,{goMeasure:true});else renderAll();
+  renderTrash();
+}
+function restoreSession(id){
+  const i=db.deletedSessions.findIndex(x=>x.id===id);if(i<0)return;
+  const sess=db.deletedSessions.splice(i,1)[0];delete sess.deletedAt;
+  if(db.sessions[sess.id])sess.id=makeId("sess");
+  db.sessions[sess.id]=sess;saveDB();renderSessions();renderTrash();
+}
+function renderTrash(){
+  if(!els.trashContents)return;
+  const sess=currentSession();els.trashContents.innerHTML="";
+  const block=(title,items)=>{
+    if(!items.length)return;
+    const d=document.createElement("div");d.className="trash-section";
+    const h=document.createElement("div");h.className="trash-section-title";h.textContent=title;d.appendChild(h);
+    items.forEach(item=>{
+      const r=document.createElement("div");r.className="trash-row";
+      const sp=document.createElement("span");sp.textContent=item.label;
+      const b=document.createElement("button");b.className="action restore-btn";b.textContent="復活";b.addEventListener("click",item.restore);
+      r.append(sp,b);d.appendChild(r);
+    });els.trashContents.appendChild(d);
+  };
+  block("この保存データ：工場",(sess.deletedMasters?.factories||[]).map(x=>({label:x.name,restore:()=>restoreMaster("factory",x.name)})));
+  block("この保存データ：作業者",(sess.deletedMasters?.workers||[]).map(x=>({label:x.name,restore:()=>restoreMaster("worker",x.name)})));
+  block("この保存データ：作業項目",(sess.deletedCategories||[]).map(x=>({label:categoryTypeLabel(x.type)+" / "+x.label,restore:()=>restoreWorkItem(x.type,x.label)})));
+  block("共通テンプレート",(db.deletedTemplates||[]).map(x=>({label:x.name,restore:()=>restoreTemplate(x.id)})));
+  block("保存データ",(db.deletedSessions||[]).map(x=>({label:x.name,restore:()=>restoreSession(x.id)})));
+  if(!els.trashContents.children.length){const p=document.createElement("div");p.className="small";p.textContent="削除済みのデータはありません。";els.trashContents.appendChild(p);}
+}
+function refreshBulkRatingControls(){
+  if(!els.bulkRatingFactory)return;
+  const sess=currentSession(),fp=els.bulkRatingFactory.value,wp=els.bulkRatingWorker.value;
+  setOptions(els.bulkRatingFactory,allObservedFactories().map(f=>({value:f,label:f})),false,fp||sess.ui.factory);
+  setOptions(els.bulkRatingWorker,allObservedWorkers().map(w=>({value:w,label:workerLabel(w)})),false,wp||sess.ui.worker);
+  updateBulkRatingTarget();
+}
+function bulkRatingEvents(){
+  const scope=els.bulkRatingScope.value,sess=currentSession();
+  return sess.events.filter(e=>{
+    if(scope==="all")return true;
+    if(scope==="factory")return e.factory===els.bulkRatingFactory.value;
+    if(scope==="worker")return e.worker===els.bulkRatingWorker.value;
+    return e.factory===els.bulkRatingFactory.value&&e.worker===els.bulkRatingWorker.value;
+  });
+}
+function updateBulkRatingTarget(){
+  if(!els.bulkRatingCount)return;
+  const scope=els.bulkRatingScope.value;
+  els.bulkRatingFactory.disabled=scope==="all"||scope==="worker";
+  els.bulkRatingWorker.disabled=scope==="all"||scope==="factory";
+  els.bulkRatingCount.textContent="対象："+bulkRatingEvents().length.toLocaleString("ja-JP")+"件";
+}
+function applyBulkRating(){
+  const targets=bulkRatingEvents(),rating=Number(els.bulkRatingValue.value);if(!targets.length){alert("対象となる観測データがありません。");return;}
+  const scope=els.bulkRatingScope.value;
+  let label="全観測";if(scope==="factory")label=els.bulkRatingFactory.value;if(scope==="worker")label=workerLabel(els.bulkRatingWorker.value);
+  if(scope==="factoryWorker")label=els.bulkRatingFactory.value+" × "+workerLabel(els.bulkRatingWorker.value);
+  if(!confirm(label+"\n対象："+targets.length+"件\n\nレーティングを "+rating+"% に一括変更しますか？"))return;
+  targets.forEach(e=>e.rating=rating);currentSession().updated=new Date().toISOString();saveDB();renderAll();
+}
+function loadExternalScript(url,globalName){
+  return new Promise((resolve,reject)=>{
+    if(window[globalName]){resolve(window[globalName]);return;}
+    const sc=document.createElement("script");sc.src=url;sc.async=true;sc.dataset.lib=globalName;
+    sc.onload=()=>window[globalName]?resolve(window[globalName]):reject(new Error(globalName+" not found"));sc.onerror=reject;document.head.appendChild(sc);
+  });
+}
+function setBusy(on,text){if(!els.busyOverlay)return;els.busyText.textContent=text||"出力中…";els.busyOverlay.classList.toggle("open",!!on);}
+function safeFileName(name){return String(name||"ワークサンプリング").replace(/[\\/:*?"<>|]/g,"_");}
+function statsForEvents(events){const x={total:events.length,value:0,support:0,loss:0};events.forEach(e=>{if(e.type in x)x[e.type]++;});return x;}
+
+async function exportExcel(){
+  setBusy(true,"Excelを作成しています…");
+  try{
+    await loadExternalScript("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js","XLSX");
+    const sess=currentSession(),wb=XLSX.utils.book_new(),st=statsForEvents(sess.events);
+    const summary=[["ワークサンプリング分析結果",""],["データ名",sess.name],["観測数",st.total],["価値作業",st.total?st.value/st.total:0],["付帯作業",st.total?st.support/st.total:0],["ロス作業",st.total?st.loss/st.total:0]];
+    const w1=XLSX.utils.aoa_to_sheet(summary);w1["!cols"]=[{wch:24},{wch:28}];["B4","B5","B6"].forEach(a=>{if(w1[a])w1[a].z="0.0%";});XLSX.utils.book_append_sheet(wb,w1,"サマリー");
+    const items=[["分類","作業項目","打点数","構成比"]];analysisCategories().forEach(c=>{const n=sess.events.filter(e=>e.type===c.type&&e.label===c.label).length;items.push([categoryTypeLabel(c.type),c.label,n,st.total?n/st.total:0]);});
+    const w2=XLSX.utils.aoa_to_sheet(items);w2["!cols"]=[{wch:14},{wch:26},{wch:12},{wch:12}];for(let r=2;r<=items.length;r++)if(w2["D"+r])w2["D"+r].z="0.0%";XLSX.utils.book_append_sheet(wb,w2,"作業項目別");
+    const fr=[["工場","観測数","価値作業","付帯作業","ロス作業","平均レーティング"]];
+    allObservedFactories().forEach(f=>{const ev=sess.events.filter(e=>e.factory===f),q=statsForEvents(ev);fr.push([f,q.total,q.total?q.value/q.total:0,q.total?q.support/q.total:0,q.total?q.loss/q.total:0,ev.length?ev.reduce((a,e)=>a+Number(e.rating||100),0)/ev.length:0]);});
+    const w3=XLSX.utils.aoa_to_sheet(fr);w3["!cols"]=[{wch:22},{wch:12},{wch:12},{wch:12},{wch:12},{wch:16}];for(let r=2;r<=fr.length;r++)["C","D","E"].forEach(c=>{if(w3[c+r])w3[c+r].z="0.0%";});XLSX.utils.book_append_sheet(wb,w3,"工場別");
+    const wr=[["作業者","観測数","価値作業","付帯作業","ロス作業","平均レーティング"]];
+    allObservedWorkers().forEach(w=>{const ev=sess.events.filter(e=>e.worker===w),q=statsForEvents(ev);wr.push([workerLabel(w),q.total,q.total?q.value/q.total:0,q.total?q.support/q.total:0,q.total?q.loss/q.total:0,ev.length?ev.reduce((a,e)=>a+Number(e.rating||100),0)/ev.length:0]);});
+    const w4=XLSX.utils.aoa_to_sheet(wr);w4["!cols"]=[{wch:22},{wch:12},{wch:12},{wch:12},{wch:12},{wch:16}];for(let r=2;r<=wr.length;r++)["C","D","E"].forEach(c=>{if(w4[c+r])w4[c+r].z="0.0%";});XLSX.utils.book_append_sheet(wb,w4,"作業者別");
+    const detail=[["日時","工場","作業者","分類","作業項目","レーティング"]];sess.events.forEach(e=>detail.push([new Date(e.ts).toLocaleString("ja-JP"),e.factory,workerLabel(e.worker),categoryTypeLabel(e.type),e.label,Number(e.rating||100)]));
+    const w5=XLSX.utils.aoa_to_sheet(detail);w5["!cols"]=[{wch:22},{wch:22},{wch:18},{wch:14},{wch:26},{wch:14}];XLSX.utils.book_append_sheet(wb,w5,"観測明細");
+    XLSX.writeFile(wb,safeFileName(sess.name)+"_ワークサンプリング.xlsx");
+  }catch(err){console.error(err);alert("Excel出力に必要な機能を読み込めませんでした。インターネット接続を確認してもう一度お試しください。");}
+  finally{setBusy(false);}
+}
+function addPptFooter(slide,page){
+  slide.addText("WORK SAMPLING",{x:.55,y:7.12,w:2.2,h:.2,fontSize:8,color:"7A8798",bold:true});
+  slide.addText(String(page),{x:12.2,y:7.12,w:.45,h:.2,fontSize:8,color:"7A8798",align:"right"});
+}
+async function exportPPT(){
+  setBusy(true,"PowerPointを作成しています…");
+  try{
+    await loadExternalScript("https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","PptxGenJS");
+    const sess=currentSession(),pptx=new PptxGenJS();pptx.layout="LAYOUT_WIDE";pptx.author="WORK SAMPLING";pptx.lang="ja-JP";
+    const C={navy:"172033",blue:"0B78C4",gray:"9E9E9E",light:"F4F6F9",border:"D9E0EA",black:"111827",muted:"64748B",white:"FFFFFF"};
+    const st=statsForEvents(sess.events),pctn=n=>st.total?Math.round(n/st.total*1000)/10:0;
+    let slide=pptx.addSlide();slide.background={color:C.light};slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:1.1,fill:{color:C.navy},line:{color:C.navy}});
+    slide.addText("WORK SAMPLING",{x:.7,y:.36,w:4,h:.35,fontSize:20,bold:true,color:C.white,charSpacing:2});slide.addText("ワークサンプリング分析結果",{x:.75,y:2.15,w:11.5,h:.7,fontSize:30,bold:true,color:C.navy});slide.addText(sess.name,{x:.78,y:3.0,w:11.2,h:.5,fontSize:20,color:C.blue,bold:true});slide.addText("観測数 "+st.total.toLocaleString("ja-JP")+"件",{x:.78,y:3.75,w:4,h:.4,fontSize:16,color:C.muted});addPptFooter(slide,1);
+    slide=pptx.addSlide();slide.addText("作業構成サマリー",{x:.65,y:.5,w:8,h:.5,fontSize:25,bold:true,color:C.navy});
+    [["観測数",st.total.toLocaleString("ja-JP"),C.navy],["価値作業",pctn(st.value)+"%",C.blue],["付帯作業",pctn(st.support)+"%",C.gray],["ロス作業",pctn(st.loss)+"%",C.black]].forEach((c,i)=>{const x=.7+i*3.05;slide.addShape(pptx.ShapeType.roundRect,{x,y:1.25,w:2.75,h:1.25,fill:{color:"F8FAFC"},line:{color:C.border}});slide.addText(c[0],{x:x+.15,y:1.48,w:2.45,h:.25,fontSize:11,color:C.muted,align:"center"});slide.addText(c[1],{x:x+.15,y:1.8,w:2.45,h:.42,fontSize:24,bold:true,color:c[2],align:"center"});});
+    slide.addChart(pptx.ChartType.doughnut,[{name:"構成比",labels:["価値作業","付帯作業","ロス作業"],values:[st.value,st.support,st.loss]}],{x:1.0,y:2.8,w:5.1,h:3.75,showLegend:true,legendPos:"b",showPercent:true,holeSize:52,chartColors:[C.blue,C.gray,C.black]});
+    [["価値作業",st.value,pctn(st.value),C.blue],["付帯作業",st.support,pctn(st.support),C.gray],["ロス作業",st.loss,pctn(st.loss),C.black]].forEach((r,i)=>{const y=3.55+i*.75;slide.addText(r[0],{x:7.1,y,w:2,h:.3,fontSize:14,color:C.navy});slide.addText(r[1]+"件 / "+r[2]+"%",{x:9.2,y,w:2.2,h:.3,fontSize:14,bold:true,color:r[3],align:"right"});});addPptFooter(slide,2);
+    const itemData=analysisCategories().map(c=>({label:c.label,type:c.type,n:sess.events.filter(e=>e.type===c.type&&e.label===c.label).length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,10);
+    slide=pptx.addSlide();slide.addText("作業項目別分析",{x:.65,y:.5,w:8,h:.5,fontSize:25,bold:true,color:C.navy});
+    if(itemData.length)slide.addChart(pptx.ChartType.bar,[{name:"打点数",labels:itemData.map(x=>x.label),values:itemData.map(x=>x.n)}],{x:.8,y:1.35,w:11.7,h:5.35,showLegend:false,showValue:true,chartColors:[C.blue],catAxisLabelFontSize:10,valAxisLabelFontSize:10});else slide.addText("観測データがありません",{x:.8,y:2.2,w:11.7,h:.5,fontSize:20,color:C.muted,align:"center"});addPptFooter(slide,3);
+    slide=pptx.addSlide();slide.addText("工場別比較",{x:.65,y:.5,w:8,h:.5,fontSize:25,bold:true,color:C.navy});
+    const facs=allObservedFactories().map(f=>({name:f,ev:sess.events.filter(e=>e.factory===f)})).filter(x=>x.ev.length);
+    if(facs.length)slide.addChart(pptx.ChartType.bar,[{name:"価値作業",labels:facs.map(x=>x.name),values:facs.map(x=>{const q=statsForEvents(x.ev);return q.total?q.value/q.total*100:0;})},{name:"付帯作業",labels:facs.map(x=>x.name),values:facs.map(x=>{const q=statsForEvents(x.ev);return q.total?q.support/q.total*100:0;})},{name:"ロス作業",labels:facs.map(x=>x.name),values:facs.map(x=>{const q=statsForEvents(x.ev);return q.total?q.loss/q.total*100:0;})}],{x:.8,y:1.35,w:11.7,h:5.35,valAxisMinVal:0,valAxisMaxVal:100,showLegend:true,legendPos:"b",chartColors:[C.blue,C.gray,C.black]});addPptFooter(slide,4);
+    slide=pptx.addSlide();slide.addText("作業者別比較",{x:.65,y:.5,w:8,h:.5,fontSize:25,bold:true,color:C.navy});
+    const workers=allObservedWorkers().map(w=>({name:workerLabel(w),ev:sess.events.filter(e=>e.worker===w)})).filter(x=>x.ev.length);
+    if(workers.length)slide.addChart(pptx.ChartType.bar,[{name:"価値作業",labels:workers.map(x=>x.name),values:workers.map(x=>{const q=statsForEvents(x.ev);return q.total?q.value/q.total*100:0;})},{name:"付帯作業",labels:workers.map(x=>x.name),values:workers.map(x=>{const q=statsForEvents(x.ev);return q.total?q.support/q.total*100:0;})},{name:"ロス作業",labels:workers.map(x=>x.name),values:workers.map(x=>{const q=statsForEvents(x.ev);return q.total?q.loss/q.total*100:0;})}],{x:.8,y:1.35,w:11.7,h:5.35,valAxisMinVal:0,valAxisMaxVal:100,showLegend:true,legendPos:"b",chartColors:[C.blue,C.gray,C.black]});addPptFooter(slide,5);
+    slide=pptx.addSlide();slide.background={color:C.light};slide.addText("分析結果まとめ",{x:.65,y:.5,w:8,h:.5,fontSize:25,bold:true,color:C.navy});
+    const facts=["総観測数："+st.total.toLocaleString("ja-JP")+"件","価値作業："+pctn(st.value)+"%　／　付帯作業："+pctn(st.support)+"%　／　ロス作業："+pctn(st.loss)+"%",...itemData.slice(0,3).map((x,i)=>(i+1)+"位 "+x.label+"："+x.n+"件（"+(st.total?x.n/st.total*100:0).toFixed(1)+"%）")];
+    facts.forEach((t,i)=>{slide.addShape(pptx.ShapeType.roundRect,{x:.9,y:1.55+i*.78,w:11.5,h:.55,fill:{color:C.white},line:{color:C.border}});slide.addText(t,{x:1.15,y:1.69+i*.78,w:11,h:.26,fontSize:14,color:C.navy,bold:i<2});});
+    slide.addText("※観測結果の事実整理を目的とした資料です。改善案や原因は自動で断定していません。",{x:.9,y:6.35,w:11.5,h:.35,fontSize:9,color:C.muted});addPptFooter(slide,6);
+    await pptx.writeFile({fileName:safeFileName(sess.name)+"_PPT提案資料.pptx"});
+  }catch(err){console.error(err);alert("PowerPoint出力に必要な機能を読み込めないか、資料生成中にエラーが発生しました。インターネット接続を確認してもう一度お試しください。");}
+  finally{setBusy(false);}
+}
+
 function applySelectedTemplate(){
   const key=els.templateSelect.value;
-  const tpl=WORK_TEMPLATES[key];
+  const tpl=getTemplateById(key);
   if(!tpl) return;
   const sess=currentSession();
 
@@ -2201,14 +2486,11 @@ els.undoBtn.addEventListener("click", () => {
   }
 });
 
-els.saveBtn.addEventListener("click", () => {
-  currentSession().updated = new Date().toISOString();
-  saveDB();
-  alert("保存しました");
-});
 els.summaryBtn.addEventListener("click", () => switchPage("summary"));
 els.csvBtn.addEventListener("click", exportCSV);
 els.csvSessionBtn.addEventListener("click", exportCSV);
+els.excelBtn.addEventListener("click", exportExcel);
+els.pptBtn.addEventListener("click", exportPPT);
 
 els.newSessionBtn.addEventListener("click", () => {
   const sess=makeSession(els.newSessionName.value.trim());
@@ -2227,14 +2509,9 @@ els.renameBtn.addEventListener("click", () => {
   renderAll();
 });
 
-els.saveSessionBtn.addEventListener("click", () => {
-  currentSession().updated = new Date().toISOString();
-  saveDB();
-  alert("保存しました");
-});
 
 els.clearBtn.addEventListener("click", () => {
-  if(confirm("現在の測定データをすべて消去しますか？")){
+  if(confirm("現在の保存データの観測結果をすべて消去しますか？\n\n対象："+currentSession().name+"\n観測数："+currentSession().events.length+"件\n\nこの操作は元に戻せません。")){
     currentSession().events = [];
     currentSession().updated = new Date().toISOString();
     saveDB();
@@ -2242,20 +2519,21 @@ els.clearBtn.addEventListener("click", () => {
   }
 });
 
-els.backupBtn.addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "ワークサンプリング_バックアップ.json";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url),1000);
-});
 
 
 els.addFactoryBtn.addEventListener("click",()=>addMaster("factory"));
 els.addWorkerBtn.addEventListener("click",()=>addMaster("worker"));
 els.applyTemplateBtn.addEventListener("click", applySelectedTemplate);
+els.templateSelect.addEventListener("change",()=>{const t=currentTemplate();els.templateNameInput.value=t?t.name:"";});
+els.renameTemplateBtn.addEventListener("click",renameSelectedTemplate);
+els.saveTemplateBtn.addEventListener("click",overwriteSelectedTemplate);
+els.addTemplateBtn.addEventListener("click",addTemplateFromCurrent);
+els.deleteTemplateBtn.addEventListener("click",deleteSelectedTemplate);
+els.trashToggleBtn.addEventListener("click",()=>els.trashPanel.classList.toggle("open"));
+els.bulkRatingScope.addEventListener("change",updateBulkRatingTarget);
+els.bulkRatingFactory.addEventListener("change",updateBulkRatingTarget);
+els.bulkRatingWorker.addEventListener("change",updateBulkRatingTarget);
+els.bulkRatingApplyBtn.addEventListener("click",applyBulkRating);
 els.addValueItemBtn.addEventListener("click",()=>addWorkItem("value"));
 els.addSupportItemBtn.addEventListener("click",()=>addWorkItem("support"));
 els.addLossItemBtn.addEventListener("click",()=>addWorkItem("loss"));

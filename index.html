@@ -170,7 +170,7 @@ th:first-child,td:first-child{text-align:left}
 .entity-row .status{font-size:10px;color:var(--muted);margin-left:6px}
 .entity-add{display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:8px}
 .entity-add .action{min-width:130px}
-.end-btn{color:#7c4a03;background:#fffaf0}
+.end-btn{color:#7c4a03;background:#fffaf0}.delete-master-btn{color:#991b1b;background:#fff7f7}
 .restore-btn{color:#166534;background:#f0fdf4}
 
 .compare-hero{
@@ -189,7 +189,7 @@ th:first-child,td:first-child{text-align:left}
 .compare-note{font-size:11px;color:var(--muted);margin-bottom:12px}
 .compare-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
 .compare-unit{
-  flex:0 0 260px;border:1px solid var(--border);border-radius:15px;background:#fff;padding:12px;
+  flex:0 0 220px;border:1px solid var(--border);border-radius:15px;background:#fff;padding:12px;
   scroll-snap-align:start
 }
 .compare-unit h3{font-size:16px;text-align:center;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -200,7 +200,7 @@ th:first-child,td:first-child{text-align:left}
 .compare-legend span{display:block;font-size:9px;color:var(--muted)}
 .compare-legend b{display:block;font-size:15px;margin-top:2px}
 .compare-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:11px}
-.compare-table{min-width:680px;margin:0}
+.compare-table{min-width:680px;margin:0;table-layout:fixed}.compare-table th:not(:first-child),.compare-table td:not(:first-child){width:220px;min-width:220px;text-align:center}
 .compare-table th{position:sticky;top:0;background:#f8fafc;z-index:1;white-space:nowrap}
 .compare-table th:first-child,.compare-table td:first-child{position:sticky;left:0;background:#fff;z-index:2;min-width:150px}
 .compare-table thead th:first-child{background:#f8fafc;z-index:3}
@@ -489,7 +489,7 @@ th:first-child,td:first-child{text-align:left}
 
   <div class="card">
     <div class="section-title">工場設定</div>
-    <p class="small">必要な数だけ追加できます。「使用終了」にしても過去の観測データは残ります。</p>
+    <p class="small">この測定データ専用の設定です。別の「新規作成」データには影響しません。観測済みの工場は「使用終了」で過去データを残せます。</p>
     <div class="entity-list" id="factorySettingsList"></div>
     <div class="entity-add">
       <input id="newFactoryName" placeholder="例：第4工場">
@@ -499,7 +499,7 @@ th:first-child,td:first-child{text-align:left}
 
   <div class="card">
     <div class="section-title">作業者設定</div>
-    <p class="small">作業者も必要な数だけ追加できます。名前や記号は自由に設定できます。</p>
+    <p class="small">この測定データ専用の設定です。別の「新規作成」データとは完全に独立します。</p>
     <div class="entity-list" id="workerSettingsList"></div>
     <div class="entity-add">
       <input id="newWorkerName" placeholder="例：作業者G / 佐藤">
@@ -623,6 +623,10 @@ function makeSession(name){
     name: name || (new Date().toLocaleDateString("ja-JP") + " 測定"),
     created: new Date().toISOString(),
     updated: new Date().toISOString(),
+    factories: [...FACTORY_DEFAULTS],
+    workers: [...WORKER_DEFAULTS],
+    inactiveFactories: [],
+    inactiveWorkers: [],
     events: []
   };
 }
@@ -686,6 +690,20 @@ function loadDB(){
   if(!db.currentId || !db.sessions[db.currentId]){
     db.currentId = Object.keys(db.sessions)[0];
   }
+
+  // V13 migration: copy the old shared master settings into each existing session.
+  Object.values(db.sessions).forEach(sess => {
+    if(!Array.isArray(sess.factories) || !sess.factories.length) sess.factories=[...(db.factories || FACTORY_DEFAULTS)];
+    if(!Array.isArray(sess.workers) || !sess.workers.length) sess.workers=[...(db.workers || WORKER_DEFAULTS)];
+    if(!Array.isArray(sess.inactiveFactories)) sess.inactiveFactories=[...(db.inactiveFactories || [])];
+    if(!Array.isArray(sess.inactiveWorkers)) sess.inactiveWorkers=[...(db.inactiveWorkers || [])];
+    sess.events=(sess.events || []).map(normalizeOldEvent);
+    sess.events.forEach(e=>{
+      if(e.factory && !sess.factories.includes(e.factory) && !sess.inactiveFactories.includes(e.factory)) sess.inactiveFactories.push(e.factory);
+      if(e.worker && !sess.workers.includes(e.worker) && !sess.inactiveWorkers.includes(e.worker)) sess.inactiveWorkers.push(e.worker);
+    });
+  });
+  saveDB();
 }
 
 function normalizeOldEvent(e){
@@ -706,14 +724,16 @@ function workerLabel(worker){
 }
 
 function allObservedFactories(){
-  const seen = new Set([...db.factories, ...db.inactiveFactories]);
-  currentSession().events.forEach(e => seen.add(e.factory));
+  const sess=currentSession();
+  const seen = new Set([...(sess.factories||[]), ...(sess.inactiveFactories||[])]);
+  sess.events.forEach(e => seen.add(e.factory));
   return [...seen].filter(Boolean);
 }
 
 function allObservedWorkers(){
-  const seen = new Set([...db.workers, ...db.inactiveWorkers]);
-  currentSession().events.forEach(e => seen.add(e.worker));
+  const sess=currentSession();
+  const seen = new Set([...(sess.workers||[]), ...(sess.inactiveWorkers||[])]);
+  sess.events.forEach(e => seen.add(e.worker));
   return [...seen].filter(Boolean);
 }
 
@@ -770,14 +790,15 @@ function setOptions(select, items, includeAll){
 }
 
 function refreshSelectors(){
+  const sess=currentSession();
   setOptions(
     els.factorySelect,
-    db.factories.map(f => ({value:f,label:f})),
+    (sess.factories||[]).map(f => ({value:f,label:f})),
     false
   );
   setOptions(
     els.workerSelect,
-    db.workers.map(w => ({value:w,label:workerLabel(w)})),
+    (sess.workers||[]).map(w => ({value:w,label:workerLabel(w)})),
     false
   );
   setOptions(
@@ -1304,107 +1325,93 @@ function scheduleTimer(){
 }
 
 
-function nameExists(kind, name, exceptName){
-  const active = kind === "factory" ? db.factories : db.workers;
-  const inactive = kind === "factory" ? db.inactiveFactories : db.inactiveWorkers;
-  return [...active,...inactive].some(x => x === name && x !== exceptName);
+function masterLists(kind){
+  const sess=currentSession();
+  return kind==="factory"
+    ? {active:sess.factories,inactive:sess.inactiveFactories}
+    : {active:sess.workers,inactive:sess.inactiveWorkers};
+}
+
+function nameExists(kind,name,exceptName){
+  const {active,inactive}=masterLists(kind);
+  return [...active,...inactive].some(x=>x===name && x!==exceptName);
 }
 
 function addMaster(kind){
-  const input = kind === "factory" ? els.newFactoryName : els.newWorkerName;
-  const name = input.value.trim();
-  if(!name) return;
-  if(nameExists(kind,name)){
-    alert("同じ名前がすでにあります");
-    return;
-  }
-  const active = kind === "factory" ? db.factories : db.workers;
-  active.push(name);
-  input.value = "";
-  saveDB();
-  refreshSelectors();
-  renderSettings();
-  renderAll();
+  const input=kind==="factory"?els.newFactoryName:els.newWorkerName;
+  const name=input.value.trim();
+  if(!name)return;
+  if(nameExists(kind,name)){alert("同じ名前がすでにあります");return;}
+  masterLists(kind).active.push(name);
+  input.value="";
+  saveDB();refreshSelectors();renderSettings();renderAll();
 }
 
-function renameMaster(kind, oldName, newName){
-  newName = newName.trim();
-  if(!newName || newName === oldName) return;
-  if(nameExists(kind,newName,oldName)){
-    alert("同じ名前がすでにあります");
-    return;
-  }
-  const active = kind === "factory" ? db.factories : db.workers;
-  const inactive = kind === "factory" ? db.inactiveFactories : db.inactiveWorkers;
-  const list = active.includes(oldName) ? active : inactive;
-  const i = list.indexOf(oldName);
-  if(i >= 0) list[i] = newName;
-
-  Object.values(db.sessions).forEach(sess => {
-    sess.events.forEach(e => {
-      if(kind === "factory" && e.factory === oldName) e.factory = newName;
-      if(kind === "worker" && e.worker === oldName) e.worker = newName;
-    });
+function renameMaster(kind,oldName,newName){
+  newName=newName.trim();
+  if(!newName||newName===oldName)return;
+  if(nameExists(kind,newName,oldName)){alert("同じ名前がすでにあります");return;}
+  const {active,inactive}=masterLists(kind);
+  const list=active.includes(oldName)?active:inactive;
+  const i=list.indexOf(oldName);if(i>=0)list[i]=newName;
+  currentSession().events.forEach(e=>{
+    if(kind==="factory"&&e.factory===oldName)e.factory=newName;
+    if(kind==="worker"&&e.worker===oldName)e.worker=newName;
   });
-  saveDB();
-  refreshSelectors();
-  renderSettings();
-  renderAll();
+  saveDB();refreshSelectors();renderSettings();renderAll();
 }
 
-function setMasterActive(kind, name, makeActive){
-  const active = kind === "factory" ? db.factories : db.workers;
-  const inactive = kind === "factory" ? db.inactiveFactories : db.inactiveWorkers;
-  if(!makeActive && active.length <= 1){
-    alert((kind === "factory" ? "工場" : "作業者") + "は最低1件必要です");
-    return;
-  }
-  const from = makeActive ? inactive : active;
-  const to = makeActive ? active : inactive;
-  const i = from.indexOf(name);
-  if(i >= 0){
-    from.splice(i,1);
-    if(!to.includes(name)) to.push(name);
-  }
-  saveDB();
-  refreshSelectors();
-  renderSettings();
-  renderAll();
+function masterObservationCount(kind,name){
+  return currentSession().events.filter(e=>kind==="factory"?e.factory===name:e.worker===name).length;
+}
+
+function setMasterActive(kind,name,makeActive){
+  const {active,inactive}=masterLists(kind);
+  if(!makeActive&&active.length<=1){alert((kind==="factory"?"工場":"作業者")+"は最低1件必要です");return;}
+  const from=makeActive?inactive:active,to=makeActive?active:inactive;
+  const i=from.indexOf(name);
+  if(i>=0){from.splice(i,1);if(!to.includes(name))to.push(name);}
+  saveDB();refreshSelectors();renderSettings();renderAll();
+}
+
+function deleteMaster(kind,name){
+  const n=masterObservationCount(kind,name);
+  if(n>0){alert("この"+(kind==="factory"?"工場":"作業者")+"には観測データが"+n+"件あるため完全削除できません。\\n過去データを残す場合は「使用終了」を使ってください。");return;}
+  const {active,inactive}=masterLists(kind);
+  if(active.includes(name)&&active.length<=1){alert((kind==="factory"?"工場":"作業者")+"は最低1件必要です");return;}
+  if(!confirm("「"+name+"」を完全削除しますか？"))return;
+  let i=active.indexOf(name);if(i>=0)active.splice(i,1);
+  i=inactive.indexOf(name);if(i>=0)inactive.splice(i,1);
+  saveDB();refreshSelectors();renderSettings();renderAll();
 }
 
 function masterRow(kind,name,isActive){
-  const row = document.createElement("div");
-  row.className = "entity-row" + (isActive ? "" : " inactive");
-
-  const input = document.createElement("input");
-  input.value = name;
-  input.setAttribute("aria-label",(kind === "factory" ? "工場名" : "作業者名"));
-
-  const rename = document.createElement("button");
-  rename.className = "action";
-  rename.textContent = "変更";
+  const row=document.createElement("div");row.className="entity-row"+(isActive?"":" inactive");
+  const input=document.createElement("input");input.value=name;
+  const rename=document.createElement("button");rename.className="action";rename.textContent="変更";
   rename.addEventListener("click",()=>renameMaster(kind,name,input.value));
-
-  const state = document.createElement("button");
-  state.className = "action " + (isActive ? "end-btn" : "restore-btn");
-  state.textContent = isActive ? "使用終了" : "再使用";
-  state.addEventListener("click",()=>setMasterActive(kind,name,!isActive));
-
-  row.appendChild(input);
-  row.appendChild(rename);
-  row.appendChild(state);
-  return row;
+  const state=document.createElement("button");
+  const n=masterObservationCount(kind,name);
+  if(n===0){
+    state.className="action delete-master-btn";state.textContent="完全削除";
+    state.addEventListener("click",()=>deleteMaster(kind,name));
+  }else{
+    state.className="action "+(isActive?"end-btn":"restore-btn");
+    state.textContent=isActive?"使用終了":"再使用";
+    state.addEventListener("click",()=>setMasterActive(kind,name,!isActive));
+  }
+  row.append(input,rename,state);return row;
 }
 
 function renderSettings(){
-  if(!els.factorySettingsList || !els.workerSettingsList) return;
-  els.factorySettingsList.innerHTML = "";
-  db.factories.forEach(n => els.factorySettingsList.appendChild(masterRow("factory",n,true)));
-  db.inactiveFactories.forEach(n => els.factorySettingsList.appendChild(masterRow("factory",n,false)));
-
-  els.workerSettingsList.innerHTML = "";
-  db.workers.forEach(n => els.workerSettingsList.appendChild(masterRow("worker",n,true)));
-  db.inactiveWorkers.forEach(n => els.workerSettingsList.appendChild(masterRow("worker",n,false)));
+  if(!els.factorySettingsList||!els.workerSettingsList)return;
+  const sess=currentSession();
+  els.factorySettingsList.innerHTML="";
+  (sess.factories||[]).forEach(n=>els.factorySettingsList.appendChild(masterRow("factory",n,true)));
+  (sess.inactiveFactories||[]).forEach(n=>els.factorySettingsList.appendChild(masterRow("factory",n,false)));
+  els.workerSettingsList.innerHTML="";
+  (sess.workers||[]).forEach(n=>els.workerSettingsList.appendChild(masterRow("worker",n,true)));
+  (sess.inactiveWorkers||[]).forEach(n=>els.workerSettingsList.appendChild(masterRow("worker",n,false)));
 }
 
 function drawMiniPie(canvas, stats){
@@ -1443,19 +1450,14 @@ function drawMiniPie(canvas, stats){
 }
 
 function compareTargets(){
+  const sess=currentSession();
   if(compareMode === "factory"){
-    const names = allObservedFactories();
-    return names.map(name => ({
-      name,
-      label:name,
-      events:currentSession().events.filter(e=>e.factory===name)
+    return (sess.factories||[]).map(name => ({
+      name,label:name,events:sess.events.filter(e=>e.factory===name)
     }));
   }
-  const names = allObservedWorkers();
-  return names.map(name => ({
-    name,
-    label:workerLabel(name),
-    events:currentSession().events.filter(e=>e.worker===name)
+  return (sess.workers||[]).map(name => ({
+    name,label:workerLabel(name),events:sess.events.filter(e=>e.worker===name)
   }));
 }
 

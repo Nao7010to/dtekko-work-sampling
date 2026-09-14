@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#f5f7fb">
+<meta name="theme-color" content="#f4f6f9">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,473 +12,900 @@
 <title>電機鉄工 ワークサンプリング</title>
 <style>
 :root{
- --bg:#f5f7fb;--card:#fff;--text:#182230;--muted:#687387;--accent:#2457d6;
- --border:#dfe5ee;--value:#e8f6ec;--support:#fff4d6;--loss:#fde8e8;
+  --bg:#f4f6f9; --card:#fff; --text:#172033; --muted:#6b7280;
+  --blue:#0b78c4; --gray:#9e9e9e; --black:#000;
+  --border:#d9e0ea; --danger:#ff0000;
+  --value:#d8ebff; --support:#e6e6e6; --loss:#efefef;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif}
-body{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+body{padding-bottom:env(safe-area-inset-bottom)}
 button,select,input{font:inherit}
-header{position:sticky;top:0;z-index:10;background:rgba(245,247,251,.97);backdrop-filter:blur(9px);border-bottom:1px solid var(--border);padding:8px 10px;padding-top:calc(8px + env(safe-area-inset-top))}
-.topline{display:flex;align-items:center;justify-content:space-between;gap:8px}
-h1{font-size:17px;margin:0}
-.sessionname{font-size:11px;color:var(--muted);max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}
-.tab{border:1px solid var(--border);background:white;border-radius:9px;padding:7px 4px;font-weight:800;font-size:12px}
-.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.wrap{padding:8px;max-width:1050px;margin:auto}
-.page{display:none}.page.active{display:block}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px;margin-bottom:8px;box-shadow:0 2px 8px rgba(22,34,51,.035)}
-.compact-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
-select,input{width:100%;min-height:34px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:5px 7px;font-weight:700;font-size:12px}
-.section-title{font-size:13px;font-weight:900;margin:0 0 6px}
-.category-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
-.workbox{border-radius:9px;padding:4px;min-height:53px;display:flex;flex-direction:column;gap:3px}
-.workbox.value{background:var(--value)}.workbox.support{background:var(--support)}.workbox.loss{background:var(--loss)}
-.addbtn{border:0;background:transparent;min-height:30px;font-size:12px;font-weight:900;padding:2px;line-height:1.15}
-.count{display:block;font-size:10px;color:var(--muted);margin-top:2px}
-.minusbtn{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.72);border-radius:7px;min-height:22px;padding:1px;font-size:11px;font-weight:900}
-.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
-.metric{background:#f8fafc;border:1px solid var(--border);border-radius:9px;text-align:center;padding:6px 3px;font-size:10px}
-.metric b{display:block;font-size:16px;margin-top:2px}
-.next{grid-column:span 2}
-.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.action{border:1px solid var(--border);background:white;border-radius:8px;padding:7px 4px;font-weight:800;font-size:11px;min-height:34px}
-.primary{background:var(--accent);border-color:var(--accent);color:white}
-.danger{color:#b42318}
-.small{font-size:10px;color:var(--muted);margin:5px 0 0}
-.filter-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.chart-wrap{height:230px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:6px}
-canvas{width:100%;height:100%}
-.table-wrap{overflow:auto;max-height:250px}
-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
-th,td{padding:6px;border-bottom:1px solid var(--border);text-align:right}
-th:first-child,td:first-child{text-align:left}
-.history{max-height:210px;overflow:auto}
-.history-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:5px 1px;border-bottom:1px solid var(--border);font-size:11px}
-.badge{display:inline-block;padding:2px 5px;border-radius:999px;font-size:9px;background:#eef2f7;color:var(--muted)}
-.session-list{display:grid;gap:6px}
-.session-item{display:grid;grid-template-columns:1fr auto auto;gap:5px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:7px}
-.session-item strong{font-size:12px}.session-item span{font-size:10px;color:var(--muted)}
-.inline-edit{display:grid;grid-template-columns:1fr auto;gap:5px;margin-bottom:5px}
-.notice{font-size:10px;color:var(--muted)}
-@media(max-width:800px){
- .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
- .compact-row{grid-template-columns:repeat(3,minmax(0,1fr))}
- .metrics{grid-template-columns:repeat(3,1fr)}
- .next{grid-column:span 1}
+header{
+  position:sticky;top:0;z-index:20;background:rgba(244,246,249,.97);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--border);
+  padding:8px 10px;padding-top:calc(8px + env(safe-area-inset-top))
 }
-@media(max-width:520px){
- .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
- .compact-row{grid-template-columns:repeat(2,minmax(0,1fr))}
- .filter-row{grid-template-columns:1fr 1fr}
- .metrics{grid-template-columns:repeat(3,1fr)}
- .actions{grid-template-columns:repeat(2,1fr)}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:18px;margin:0}
+.session-label{font-size:11px;color:var(--muted);max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.tab{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 4px;font-weight:800;font-size:12px}
+.tab.active{background:#2f5bd8;color:#fff;border-color:#2f5bd8}
+.wrap{max-width:1180px;margin:auto;padding:8px}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px;margin-bottom:8px}
+.controls{display:grid;grid-template-columns:1.1fr 1.1fr .9fr 1fr 1fr;gap:6px}
+select,input{width:100%;min-height:36px;border:1px solid var(--border);border-radius:9px;background:#fff;padding:6px 8px;font-size:12px;font-weight:700}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.metric{background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:6px 4px;text-align:center;font-size:10px}
+.metric b{display:block;font-size:16px;margin-top:2px}
+.section-title{font-size:13px;font-weight:900;margin:0 0 6px}
+.work-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.work-item{display:grid;grid-template-columns:34px 1fr;gap:5px}
+.minus-btn{
+  min-height:40px;border:2px solid var(--danger);background:var(--danger);color:#fff;
+  border-radius:8px;font-size:23px;font-weight:900;line-height:1
+}
+.add-btn{min-height:40px;border:0;border-radius:8px;padding:4px 6px;font-size:12px;font-weight:900}
+.work-item.value .add-btn{background:var(--value)}
+.work-item.support .add-btn{background:var(--support)}
+.work-item.loss .add-btn{background:var(--loss)}
+.count{display:block;color:var(--muted);font-size:10px;margin-top:2px;font-weight:700}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.action{min-height:36px;border:1px solid var(--border);background:#fff;border-radius:9px;padding:6px;font-size:11px;font-weight:800}
+.primary{background:#2f5bd8;color:#fff;border-color:#2f5bd8}
+.danger-text{color:#b42318}
+.small{font-size:10px;color:var(--muted);margin:5px 0 0}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.summary-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:8px}
+.chart-card{min-height:340px}
+.chart-box{height:300px}
+canvas{width:100%;height:100%}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border-bottom:1px solid var(--border);padding:8px 6px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+.history{max-height:220px;overflow:auto}
+.history-row{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px solid var(--border);padding:6px 0;font-size:11px}
+.badge{display:inline-block;background:#eef2f7;border-radius:999px;padding:2px 5px;font-size:9px;color:var(--muted)}
+.inline{display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:6px}
+.session-list{display:grid;gap:6px}
+.session-row{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:7px}
+.session-row strong{font-size:12px}.session-row span{font-size:10px;color:var(--muted)}
+@media(max-width:900px){
+  .controls{grid-template-columns:repeat(3,1fr)}
+  .work-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .metrics{grid-template-columns:repeat(3,1fr)}
+  .summary-layout{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .controls{grid-template-columns:repeat(2,1fr)}
+  .work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .actions{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 <body>
 <header>
- <div class="topline">
-   <h1>電機鉄工 WS</h1>
-   <div class="sessionname" id="currentSessionLabel">測定データ</div>
- </div>
- <div class="tabs">
-   <button class="tab active" data-page="measure">測定</button>
-   <button class="tab" data-page="summary">集計・グラフ</button>
-   <button class="tab" data-page="data">データ管理</button>
- </div>
+  <div class="header-row">
+    <h1>電機鉄工 WS</h1>
+    <div class="session-label" id="sessionLabel">測定データ</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-page="measure">測定</button>
+    <button class="tab" data-page="summary">集計・グラフ</button>
+    <button class="tab" data-page="data">データ管理</button>
+  </div>
 </header>
 
 <div class="wrap">
+
 <section class="page active" id="page-measure">
- <div class="card">
-   <div class="compact-row">
-     <select id="factory"></select>
-     <select id="worker"></select>
-     <select id="rating">
-       <option value="50">R 50</option><option value="80">R 80</option>
-       <option value="100" selected>R 100</option><option value="120">R 120</option>
-     </select>
-     <select id="mode">
-       <option value="manual">手動</option><option value="fixed">固定</option><option value="random" selected>ランダム</option>
-     </select>
-     <select id="timing">
-       <option value="180,480">3〜8分</option><option value="300,600" selected>5〜10分</option>
-       <option value="300,900">5〜15分</option><option value="600,1200">10〜20分</option>
-     </select>
-   </div>
- </div>
+  <div class="card">
+    <div class="controls">
+      <select id="factorySelect"></select>
+      <select id="workerSelect"></select>
+      <select id="ratingSelect">
+        <option value="50">R 50</option>
+        <option value="80">R 80</option>
+        <option value="100" selected>R 100</option>
+        <option value="120">R 120</option>
+      </select>
+      <select id="modeSelect">
+        <option value="manual">手動</option>
+        <option value="fixed">固定</option>
+        <option value="random" selected>ランダム</option>
+      </select>
+      <select id="timingSelect">
+        <option value="180,480">3〜8分</option>
+        <option value="300,600" selected>5〜10分</option>
+        <option value="300,900">5〜15分</option>
+        <option value="600,1200">10〜20分</option>
+      </select>
+    </div>
+  </div>
 
- <div class="card">
-   <div class="metrics">
-     <div class="metric">観測数<b id="mTotal">0</b></div>
-     <div class="metric">価値<b id="mValue">0%</b></div>
-     <div class="metric">付随<b id="mSupport">0%</b></div>
-     <div class="metric">ロス<b id="mLoss">0%</b></div>
-     <div class="metric">平均R<b id="mRating">-</b></div>
-     <div class="metric next">次回<b id="nextObs">手動</b></div>
-   </div>
- </div>
+  <div class="card">
+    <div class="metrics">
+      <div class="metric">観測数<b id="mTotal">0</b></div>
+      <div class="metric">価値作業<b id="mValue">0%</b></div>
+      <div class="metric">付帯作業<b id="mSupport">0%</b></div>
+      <div class="metric">ロス作業<b id="mLoss">0%</b></div>
+      <div class="metric">平均R<b id="mRating">-</b></div>
+      <div class="metric">次回<b id="nextObs">手動</b></div>
+    </div>
+  </div>
 
- <div class="card"><div class="section-title">価値作業</div><div class="grid" id="valueGrid"></div></div>
- <div class="card"><div class="section-title">付随作業</div><div class="grid" id="supportGrid"></div></div>
- <div class="card"><div class="section-title">ロス</div><div class="grid" id="lossGrid"></div></div>
+  <div class="card">
+    <div class="section-title">価値作業</div>
+    <div class="work-grid" id="valueGrid"></div>
+  </div>
 
- <div class="card">
-   <div class="actions">
-     <button class="action" id="undo">↩ 直前取消</button>
-     <button class="action primary" id="quickSave">保存</button>
-     <button class="action" id="goSummary">集計を見る</button>
-     <button class="action" id="csvCurrent">CSV</button>
-   </div>
-   <p class="small">「−1」は、現在選択中の工場・作業者について、その作業項目の直近1件だけ削除します。</p>
- </div>
+  <div class="card">
+    <div class="section-title">付帯作業</div>
+    <div class="work-grid" id="supportGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">ロス作業</div>
+    <div class="work-grid" id="lossGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="actions">
+      <button class="action" id="undoBtn">↩ 直前取消</button>
+      <button class="action primary" id="saveBtn">保存</button>
+      <button class="action" id="summaryBtn">集計を見る</button>
+      <button class="action" id="csvBtn">CSV</button>
+    </div>
+    <p class="small">赤い「−」は、現在選択中の工場・作業者について、その作業項目の直近1件を削除します。</p>
+  </div>
 </section>
 
 <section class="page" id="page-summary">
- <div class="card">
-   <div class="section-title">集計条件</div>
-   <div class="filter-row">
-     <select id="filterFactory"></select>
-     <select id="filterWorker"></select>
-     <select id="chartMode">
-       <option value="type">価値・付随・ロス</option>
-       <option value="item">作業項目別</option>
-       <option value="worker">作業者別</option>
-     </select>
-   </div>
- </div>
+  <div class="card">
+    <div class="section-title">集計条件</div>
+    <div class="filters">
+      <select id="filterFactory"></select>
+      <select id="filterWorker"></select>
+    </div>
+  </div>
 
- <div class="card">
-   <div class="metrics">
-     <div class="metric">観測数<b id="sTotal">0</b></div>
-     <div class="metric">価値<b id="sValue">0%</b></div>
-     <div class="metric">付随<b id="sSupport">0%</b></div>
-     <div class="metric">ロス<b id="sLoss">0%</b></div>
-     <div class="metric">平均R<b id="sRating">-</b></div>
-     <div class="metric">対象<b id="sTarget">全体</b></div>
-   </div>
- </div>
+  <div class="card">
+    <div class="metrics">
+      <div class="metric">観測数<b id="sTotal">0</b></div>
+      <div class="metric">価値作業<b id="sValue">0%</b></div>
+      <div class="metric">付帯作業<b id="sSupport">0%</b></div>
+      <div class="metric">ロス作業<b id="sLoss">0%</b></div>
+      <div class="metric">平均R<b id="sRating">-</b></div>
+      <div class="metric">対象<b id="sTarget">全体</b></div>
+    </div>
+  </div>
 
- <div class="card">
-   <div class="section-title">グラフ</div>
-   <div class="chart-wrap"><canvas id="chart"></canvas></div>
- </div>
+  <div class="summary-layout">
+    <div class="card chart-card">
+      <div class="section-title">ワークサンプリング構成比</div>
+      <div class="chart-box"><canvas id="pieChart"></canvas></div>
+    </div>
 
- <div class="card">
-   <div class="section-title">作業者別一覧</div>
-   <div class="table-wrap">
-    <table>
-      <thead><tr><th>工場</th><th>作業者</th><th>観測</th><th>価値</th><th>付随</th><th>ロス</th><th>平均R</th></tr></thead>
-      <tbody id="summaryTable"></tbody>
-    </table>
-   </div>
- </div>
+    <div class="card">
+      <div class="section-title">ワークサンプリング集計表</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>分類</th><th>打点数</th><th>構成比</th></tr>
+          </thead>
+          <tbody id="summaryTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
- <div class="card">
-   <div class="section-title">直近の観測</div>
-   <div class="history" id="history"></div>
- </div>
+  <div class="card">
+    <div class="section-title">直近の観測</div>
+    <div class="history" id="history"></div>
+  </div>
 </section>
 
 <section class="page" id="page-data">
- <div class="card">
-   <div class="section-title">新規測定</div>
-   <div class="inline-edit">
-     <input id="newSessionName" placeholder="例：2026-09-14 電機鉄工 診断1日目">
-     <button class="action primary" id="newSession">新規作成</button>
-   </div>
-   <p class="notice">新規作成すると別データとして保存され、過去データは残ります。</p>
- </div>
+  <div class="card">
+    <div class="section-title">新規測定</div>
+    <div class="inline">
+      <input id="newSessionName" placeholder="例：2026-09-14 診断1日目">
+      <button class="action primary" id="newSessionBtn">新規作成</button>
+    </div>
+  </div>
 
- <div class="card">
-   <div class="section-title">現在のデータ</div>
-   <div class="inline-edit">
-     <input id="renameSession" placeholder="データ名">
-     <button class="action" id="renameBtn">名称変更</button>
-   </div>
-   <div class="actions">
-     <button class="action primary" id="saveSession">保存</button>
-     <button class="action" id="csvSession">CSV出力</button>
-     <button class="action danger" id="clearCurrent">現在データ消去</button>
-     <button class="action" id="exportBackup">バックアップ</button>
-   </div>
- </div>
+  <div class="card">
+    <div class="section-title">現在のデータ</div>
+    <div class="inline">
+      <input id="renameInput" placeholder="データ名">
+      <button class="action" id="renameBtn">名称変更</button>
+    </div>
+    <div class="actions">
+      <button class="action primary" id="saveSessionBtn">保存</button>
+      <button class="action" id="csvSessionBtn">CSV出力</button>
+      <button class="action danger-text" id="clearBtn">現在データ消去</button>
+      <button class="action" id="backupBtn">バックアップ</button>
+    </div>
+  </div>
 
- <div class="card">
-   <div class="section-title">工場名設定</div>
-   <div class="inline-edit"><input id="factoryName0"><button class="action factorySave" data-i="0">変更</button></div>
-   <div class="inline-edit"><input id="factoryName1"><button class="action factorySave" data-i="1">変更</button></div>
-   <div class="inline-edit"><input id="factoryName2"><button class="action factorySave" data-i="2">変更</button></div>
- </div>
+  <div class="card">
+    <div class="section-title">工場名設定</div>
+    <div class="inline"><input id="factoryName0"><button class="action factoryRenameBtn" data-index="0">変更</button></div>
+    <div class="inline"><input id="factoryName1"><button class="action factoryRenameBtn" data-index="1">変更</button></div>
+    <div class="inline"><input id="factoryName2"><button class="action factoryRenameBtn" data-index="2">変更</button></div>
+  </div>
 
- <div class="card">
-   <div class="section-title">保存済みデータ</div>
-   <div class="session-list" id="sessionList"></div>
- </div>
+  <div class="card">
+    <div class="section-title">保存済みデータ</div>
+    <div class="session-list" id="sessionList"></div>
+  </div>
 </section>
+
 </div>
 
 <script>
-const DEFAULT_FACTORIES=["工場A","工場B","工場C"];
-const WORKERS=["A","B","C","D","E","F"];
-const CATEGORIES=[
- {type:"value",label:"切断・加工"},{type:"value",label:"溶接"},{type:"value",label:"組立・仮付け"},{type:"value",label:"仕上げ"},
- {type:"support",label:"段取り"},{type:"support",label:"図面確認"},{type:"support",label:"測定・検査"},{type:"support",label:"材料・製品運搬"},{type:"support",label:"クレーン操作・反転"},
- {type:"loss",label:"歩行"},{type:"loss",label:"材料・工具探し"},{type:"loss",label:"待ち"},{type:"loss",label:"手直し"},{type:"loss",label:"打合せ・指示確認"},{type:"loss",label:"その他"}
+"use strict";
+
+const FACTORY_DEFAULTS = ["工場A","工場B","工場C"];
+const WORKERS = ["A","B","C","D","E","F"];
+const CATEGORIES = [
+  {type:"value",label:"切断・加工"},
+  {type:"value",label:"溶接"},
+  {type:"value",label:"組立・仮付け"},
+  {type:"value",label:"仕上げ"},
+  {type:"support",label:"段取り"},
+  {type:"support",label:"図面確認"},
+  {type:"support",label:"測定・検査"},
+  {type:"support",label:"材料・製品運搬"},
+  {type:"support",label:"クレーン操作・反転"},
+  {type:"loss",label:"歩行"},
+  {type:"loss",label:"材料・工具探し"},
+  {type:"loss",label:"待ち"},
+  {type:"loss",label:"手直し"},
+  {type:"loss",label:"打合せ・指示確認"},
+  {type:"loss",label:"その他"}
 ];
-const STORE="dtekko_ws_v3";
-let db={factories:[...DEFAULT_FACTORIES],currentId:null,sessions:{}};
-let timer=null;
 
-function id(){return "s_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)}
-function nowName(){return new Date().toLocaleDateString("ja-JP")+" 測定"}
-function blankSession(name){return {id:id(),name:name||nowName(),created:new Date().toISOString(),updated:new Date().toISOString(),events:[]}}
-function saveDB(){localStorage.setItem(STORE,JSON.stringify(db))}
-function current(){return db.sessions[db.currentId]}
-function ensureDB(){
- try{const raw=localStorage.getItem(STORE);if(raw)db=JSON.parse(raw)}catch(e){}
- if(!db.factories||db.factories.length<3)db.factories=[...DEFAULT_FACTORIES];
- if(!db.sessions||Object.keys(db.sessions).length===0){
-   const s=blankSession();
-   db.sessions[s.id]=s;db.currentId=s.id;
-   // migrate old app data if present
-   try{
-     const old=JSON.parse(localStorage.getItem("dtekko_ws_pwa")||"null");
-     if(old&&Array.isArray(old.events)&&old.events.length){
-       s.name="旧データ移行";
-       s.events=old.events.map(e=>({...e,factory:db.factories[0],worker:(e.worker||"作業者A").replace("作業者","")}));
-     }
-   }catch(e){}
- }
- if(!db.currentId||!db.sessions[db.currentId])db.currentId=Object.keys(db.sessions)[0];
- saveDB();
+const STORE_KEY = "dtekko_ws_stable_v6";
+
+const els = {
+  factorySelect: document.getElementById("factorySelect"),
+  workerSelect: document.getElementById("workerSelect"),
+  ratingSelect: document.getElementById("ratingSelect"),
+  modeSelect: document.getElementById("modeSelect"),
+  timingSelect: document.getElementById("timingSelect"),
+  mTotal: document.getElementById("mTotal"),
+  mValue: document.getElementById("mValue"),
+  mSupport: document.getElementById("mSupport"),
+  mLoss: document.getElementById("mLoss"),
+  mRating: document.getElementById("mRating"),
+  nextObs: document.getElementById("nextObs"),
+  valueGrid: document.getElementById("valueGrid"),
+  supportGrid: document.getElementById("supportGrid"),
+  lossGrid: document.getElementById("lossGrid"),
+  undoBtn: document.getElementById("undoBtn"),
+  saveBtn: document.getElementById("saveBtn"),
+  summaryBtn: document.getElementById("summaryBtn"),
+  csvBtn: document.getElementById("csvBtn"),
+  filterFactory: document.getElementById("filterFactory"),
+  filterWorker: document.getElementById("filterWorker"),
+  sTotal: document.getElementById("sTotal"),
+  sValue: document.getElementById("sValue"),
+  sSupport: document.getElementById("sSupport"),
+  sLoss: document.getElementById("sLoss"),
+  sRating: document.getElementById("sRating"),
+  sTarget: document.getElementById("sTarget"),
+  pieChart: document.getElementById("pieChart"),
+  summaryTable: document.getElementById("summaryTable"),
+  history: document.getElementById("history"),
+  newSessionName: document.getElementById("newSessionName"),
+  newSessionBtn: document.getElementById("newSessionBtn"),
+  renameInput: document.getElementById("renameInput"),
+  renameBtn: document.getElementById("renameBtn"),
+  saveSessionBtn: document.getElementById("saveSessionBtn"),
+  csvSessionBtn: document.getElementById("csvSessionBtn"),
+  clearBtn: document.getElementById("clearBtn"),
+  backupBtn: document.getElementById("backupBtn"),
+  sessionList: document.getElementById("sessionList"),
+  sessionLabel: document.getElementById("sessionLabel"),
+  factoryName0: document.getElementById("factoryName0"),
+  factoryName1: document.getElementById("factoryName1"),
+  factoryName2: document.getElementById("factoryName2")
+};
+
+let db = {
+  factories: [...FACTORY_DEFAULTS],
+  currentId: null,
+  sessions: {}
+};
+
+let timerHandle = null;
+
+function makeId(){
+  return "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 }
 
-function setOptions(sel,items,all=false){
- sel.innerHTML="";
- if(all){const o=document.createElement("option");o.value="ALL";o.textContent="全体";sel.appendChild(o)}
- items.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;sel.appendChild(o)})
-}
-function refreshSelectors(){
- const fv=factory.value,wv=worker.value,ff=filterFactory.value,fw=filterWorker.value;
- setOptions(factory,db.factories);setOptions(worker,WORKERS.map(x=>"作業者"+x));
- setOptions(filterFactory,db.factories,true);setOptions(filterWorker,WORKERS.map(x=>"作業者"+x),true);
- if(db.factories.includes(fv))factory.value=fv;
- if(WORKERS.map(x=>"作業者"+x).includes(wv))worker.value=wv;
- if(["ALL",...db.factories].includes(ff))filterFactory.value=ff;
- if(["ALL",...WORKERS.map(x=>"作業者"+x)].includes(fw))filterWorker.value=fw;
- db.factories.forEach((n,i)=>document.getElementById("factoryName"+i).value=n);
+function makeSession(name){
+  const sid = makeId();
+  return {
+    id: sid,
+    name: name || (new Date().toLocaleDateString("ja-JP") + " 測定"),
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    events: []
+  };
 }
 
-function filtered(factoryVal="ALL",workerVal="ALL"){
- return current().events.filter(e=>(factoryVal==="ALL"||e.factory===factoryVal)&&(workerVal==="ALL"||e.worker===workerVal.replace("作業者","")));
+function saveDB(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(db));
 }
-function stats(events){
- const o={total:events.length,value:0,support:0,loss:0,rSum:0,rCount:0,items:{}};
- CATEGORIES.forEach(c=>o.items[c.label]=0);
- events.forEach(e=>{o[e.type]=(o[e.type]||0)+1;o.items[e.label]=(o.items[e.label]||0)+1;if(e.rating!=null){o.rSum+=+e.rating;o.rCount++}});
- return o;
-}
-function pct(n,d){return d?Math.round(n/d*100):0}
-function avgR(s){return s.rCount?Math.round(s.rSum/s.rCount):"-"}
 
-function renderButtons(){
- ["value","support","loss"].forEach(type=>{
-  const g=document.getElementById(type+"Grid");g.innerHTML="";
-  CATEGORIES.filter(c=>c.type===type).forEach(c=>{
-   const box=document.createElement("div");box.className="workbox "+type;
-   const add=document.createElement("button");add.className="addbtn";
-   add.innerHTML=`${c.label}<span class="count" id="cnt-${CSS.escape(c.label)}">0</span>`;
-   add.onclick=()=>addEvent(c);
-   const minus=document.createElement("button");minus.className="minusbtn";minus.textContent="−1";minus.onclick=()=>removeMatching(c);
-   box.append(add,minus);g.appendChild(box);
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) db = JSON.parse(raw);
+  }catch(e){}
+
+  if(!Array.isArray(db.factories) || db.factories.length !== 3){
+    db.factories = [...FACTORY_DEFAULTS];
+  }
+  if(!db.sessions || typeof db.sessions !== "object"){
+    db.sessions = {};
+  }
+
+  // migrate from previous version if this is first launch
+  if(Object.keys(db.sessions).length === 0){
+    const first = makeSession("測定データ");
+    let migrated = false;
+
+    const previousKeys = ["dtekko_ws_v3","dtekko_ws_pwa"];
+    for(const key of previousKeys){
+      try{
+        const old = JSON.parse(localStorage.getItem(key) || "null");
+        if(!old) continue;
+
+        if(old.sessions && typeof old.sessions === "object"){
+          const oldCurrent = old.sessions[old.currentId] || Object.values(old.sessions)[0];
+          if(oldCurrent && Array.isArray(oldCurrent.events)){
+            first.name = oldCurrent.name || "旧データ移行";
+            first.events = oldCurrent.events.map(normalizeOldEvent);
+            migrated = true;
+            break;
+          }
+        }
+        if(Array.isArray(old.events)){
+          first.name = "旧データ移行";
+          first.events = old.events.map(normalizeOldEvent);
+          migrated = true;
+          break;
+        }
+      }catch(e){}
+    }
+
+    db.sessions[first.id] = first;
+    db.currentId = first.id;
+    saveDB();
+  }
+
+  if(!db.currentId || !db.sessions[db.currentId]){
+    db.currentId = Object.keys(db.sessions)[0];
+  }
+}
+
+function normalizeOldEvent(e){
+  const worker = String(e.worker || "A").replace("作業者","");
+  return {
+    ts: e.ts || new Date().toISOString(),
+    factory: e.factory || db.factories[0],
+    worker: WORKERS.includes(worker) ? worker : "A",
+    type: e.type || "support",
+    label: e.label || "その他",
+    rating: Number(e.rating || 100)
+  };
+}
+
+function currentSession(){
+  return db.sessions[db.currentId];
+}
+
+function pct(n,d){
+  return d ? Math.round(n / d * 100) : 0;
+}
+
+function calcStats(events){
+  const s = {total:events.length,value:0,support:0,loss:0,ratingSum:0,ratingCount:0,items:{}};
+  CATEGORIES.forEach(c => s.items[c.label] = 0);
+  events.forEach(e => {
+    if(e.type === "value") s.value++;
+    else if(e.type === "support") s.support++;
+    else if(e.type === "loss") s.loss++;
+    s.items[e.label] = (s.items[e.label] || 0) + 1;
+    if(Number.isFinite(Number(e.rating))){
+      s.ratingSum += Number(e.rating);
+      s.ratingCount++;
+    }
   });
- });
+  return s;
 }
-function addEvent(c){
- current().events.push({ts:new Date().toISOString(),factory:factory.value,worker:worker.value.replace("作業者",""),type:c.type,label:c.label,rating:+rating.value});
- current().updated=new Date().toISOString();saveDB();renderAll();
+
+function avgRating(s){
+  return s.ratingCount ? Math.round(s.ratingSum / s.ratingCount) : "-";
 }
-function removeMatching(c){
- const ev=current().events;const f=factory.value,w=worker.value.replace("作業者","");
- for(let i=ev.length-1;i>=0;i--){
-  if(ev[i].factory===f&&ev[i].worker===w&&ev[i].label===c.label){ev.splice(i,1);saveDB();renderAll();return}
- }
- alert(`${f}・作業者${w} の「${c.label}」はありません`);
+
+function setOptions(select, items, includeAll){
+  const previous = select.value;
+  select.innerHTML = "";
+  if(includeAll){
+    const all = document.createElement("option");
+    all.value = "ALL";
+    all.textContent = "全体";
+    select.appendChild(all);
+  }
+  items.forEach(item => {
+    const opt = document.createElement("option");
+    opt.value = item.value;
+    opt.textContent = item.label;
+    select.appendChild(opt);
+  });
+  const allowed = [...select.options].map(o => o.value);
+  if(allowed.includes(previous)) select.value = previous;
+}
+
+function refreshSelectors(){
+  setOptions(
+    els.factorySelect,
+    db.factories.map(f => ({value:f,label:f})),
+    false
+  );
+  setOptions(
+    els.workerSelect,
+    WORKERS.map(w => ({value:w,label:"作業者"+w})),
+    false
+  );
+  setOptions(
+    els.filterFactory,
+    db.factories.map(f => ({value:f,label:f})),
+    true
+  );
+  setOptions(
+    els.filterWorker,
+    WORKERS.map(w => ({value:w,label:"作業者"+w})),
+    true
+  );
+
+  els.factoryName0.value = db.factories[0];
+  els.factoryName1.value = db.factories[1];
+  els.factoryName2.value = db.factories[2];
+}
+
+function getFilteredEvents(factoryValue, workerValue){
+  return currentSession().events.filter(e => {
+    const factoryOK = factoryValue === "ALL" || e.factory === factoryValue;
+    const workerOK = workerValue === "ALL" || e.worker === workerValue;
+    return factoryOK && workerOK;
+  });
+}
+
+function buildWorkButtons(){
+  const groups = {
+    value: els.valueGrid,
+    support: els.supportGrid,
+    loss: els.lossGrid
+  };
+  Object.values(groups).forEach(g => g.innerHTML = "");
+
+  CATEGORIES.forEach(c => {
+    const wrap = document.createElement("div");
+    wrap.className = "work-item " + c.type;
+
+    const minus = document.createElement("button");
+    minus.className = "minus-btn";
+    minus.textContent = "−";
+    minus.addEventListener("click", () => removeLatestMatching(c));
+
+    const add = document.createElement("button");
+    add.className = "add-btn";
+    add.innerHTML = c.label + '<span class="count" id="count-' + safeId(c.label) + '">0回</span>';
+    add.addEventListener("click", () => addEvent(c));
+
+    wrap.appendChild(minus);
+    wrap.appendChild(add);
+    groups[c.type].appendChild(wrap);
+  });
+}
+
+function safeId(text){
+  return encodeURIComponent(text).replaceAll("%","_");
+}
+
+function addEvent(category){
+  const ev = {
+    ts: new Date().toISOString(),
+    factory: els.factorySelect.value,
+    worker: els.workerSelect.value,
+    type: category.type,
+    label: category.label,
+    rating: Number(els.ratingSelect.value)
+  };
+  currentSession().events.push(ev);
+  currentSession().updated = new Date().toISOString();
+  saveDB();
+  renderAll();
+}
+
+function removeLatestMatching(category){
+  const events = currentSession().events;
+  const f = els.factorySelect.value;
+  const w = els.workerSelect.value;
+  for(let i=events.length-1;i>=0;i--){
+    const e = events[i];
+    if(e.factory === f && e.worker === w && e.label === category.label){
+      events.splice(i,1);
+      currentSession().updated = new Date().toISOString();
+      saveDB();
+      renderAll();
+      return;
+    }
+  }
+  alert(f + "・作業者" + w + " の「" + category.label + "」はありません");
 }
 
 function renderMeasure(){
- const ev=filtered(factory.value,worker.value),s=stats(ev);
- mTotal.textContent=s.total;mValue.textContent=pct(s.value,s.total)+"%";mSupport.textContent=pct(s.support,s.total)+"%";mLoss.textContent=pct(s.loss,s.total)+"%";mRating.textContent=avgR(s);
- CATEGORIES.forEach(c=>{const el=document.getElementById("cnt-"+CSS.escape(c.label));if(el)el.textContent=(s.items[c.label]||0)+"回"});
- currentSessionLabel.textContent=current().name;
+  const events = getFilteredEvents(els.factorySelect.value, els.workerSelect.value);
+  const s = calcStats(events);
+
+  els.mTotal.textContent = s.total;
+  els.mValue.textContent = pct(s.value,s.total) + "%";
+  els.mSupport.textContent = pct(s.support,s.total) + "%";
+  els.mLoss.textContent = pct(s.loss,s.total) + "%";
+  els.mRating.textContent = avgRating(s);
+  els.sessionLabel.textContent = currentSession().name;
+
+  CATEGORIES.forEach(c => {
+    const node = document.getElementById("count-" + safeId(c.label));
+    if(node) node.textContent = (s.items[c.label] || 0) + "回";
+  });
 }
+
 function renderSummary(){
- const ff=filterFactory.value||"ALL",fw=filterWorker.value||"ALL",ev=filtered(ff,fw),s=stats(ev);
- sTotal.textContent=s.total;sValue.textContent=pct(s.value,s.total)+"%";sSupport.textContent=pct(s.support,s.total)+"%";sLoss.textContent=pct(s.loss,s.total)+"%";sRating.textContent=avgR(s);
- sTarget.textContent=(ff==="ALL"?"全工場":ff)+" / "+(fw==="ALL"?"全作業者":fw);
- summaryTable.innerHTML="";
- db.factories.forEach(f=>WORKERS.forEach(w=>{
-   const e=current().events.filter(x=>x.factory===f&&x.worker===w);
-   if(!e.length)return;
-   const st=stats(e),tr=document.createElement("tr");
-   tr.innerHTML=`<td>${f}</td><td>${w}</td><td>${st.total}</td><td>${pct(st.value,st.total)}%</td><td>${pct(st.support,st.total)}%</td><td>${pct(st.loss,st.total)}%</td><td>${avgR(st)}</td>`;
-   summaryTable.appendChild(tr);
- }));
- history.innerHTML="";
- ev.slice(-40).reverse().forEach(e=>{
-   const d=new Date(e.ts),div=document.createElement("div");div.className="history-item";
-   div.innerHTML=`<span><b>${e.factory} / ${e.worker}</b>　${e.label} <span class="badge">R${e.rating}</span></span><span>${d.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span>`;
-   history.appendChild(div);
- });
- drawChart(ev);
+  const f = els.filterFactory.value || "ALL";
+  const w = els.filterWorker.value || "ALL";
+  const events = getFilteredEvents(f,w);
+  const s = calcStats(events);
+
+  els.sTotal.textContent = s.total;
+  els.sValue.textContent = pct(s.value,s.total) + "%";
+  els.sSupport.textContent = pct(s.support,s.total) + "%";
+  els.sLoss.textContent = pct(s.loss,s.total) + "%";
+  els.sRating.textContent = avgRating(s);
+  els.sTarget.textContent = (f === "ALL" ? "全工場" : f) + " / " + (w === "ALL" ? "全作業者" : "作業者"+w);
+
+  renderSummaryTable(s);
+  renderHistory(events);
+  drawPieChart(s);
 }
-function drawChart(events){
- const canvas=document.getElementById("chart"),ctx=canvas.getContext("2d"),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
- canvas.width=Math.max(300,rect.width*dpr);canvas.height=Math.max(180,rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
- const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);ctx.font="11px -apple-system,sans-serif";ctx.fillStyle="#182230";
- let labels=[],vals=[];
- if(chartMode.value==="type"){
-   const s=stats(events);labels=["価値","付随","ロス"];vals=[s.value,s.support,s.loss];
- }else if(chartMode.value==="item"){
-   const s=stats(events);labels=CATEGORIES.map(c=>c.label);vals=labels.map(l=>s.items[l]||0);
- }else{
-   labels=WORKERS.map(w=>"作業者"+w);vals=WORKERS.map(w=>events.filter(e=>e.worker===w).length);
- }
- if(!events.length){
-   ctx.fillStyle="#687387";ctx.textAlign="center";ctx.textBaseline="middle";
-   ctx.fillText("まだ集計データがありません",W/2,H/2);
-   return;
- }
- const max=Math.max(1,...vals),left=90,right=20,top=10,bottom=10,row=(H-top-bottom)/Math.max(1,labels.length);
- labels.forEach((lab,i)=>{
-   const y=top+i*row+row*.15,h=row*.6,w=(W-left-right)*(vals[i]/max);
-   ctx.fillStyle="#687387";ctx.textAlign="right";ctx.textBaseline="middle";
-   const shown=lab.length>9?lab.slice(0,8)+"…":lab;ctx.fillText(shown,left-6,y+h/2);
-   ctx.fillStyle="#e8edf5";ctx.fillRect(left,y,W-left-right,h);
-   ctx.fillStyle="#2457d6";ctx.fillRect(left,y,w,h);
-   ctx.fillStyle="#182230";ctx.textAlign="left";ctx.fillText(String(vals[i]),Math.min(W-right-18,left+w+5),y+h/2);
- });
+
+function renderSummaryTable(s){
+  els.summaryTable.innerHTML = "";
+  const rows = [
+    ["価値作業",s.value,pct(s.value,s.total)],
+    ["付帯作業",s.support,pct(s.support,s.total)],
+    ["ロス作業",s.loss,pct(s.loss,s.total)]
+  ];
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td>"+r[0]+"</td><td>"+r[1]+"</td><td>"+r[2]+"%</td>";
+    els.summaryTable.appendChild(tr);
+  });
+  const total = document.createElement("tr");
+  total.innerHTML = "<td><b>合計</b></td><td><b>"+s.total+"</b></td><td><b>"+(s.total?100:0)+"%</b></td>";
+  els.summaryTable.appendChild(total);
+}
+
+function renderHistory(events){
+  els.history.innerHTML = "";
+  events.slice(-40).reverse().forEach(e => {
+    const div = document.createElement("div");
+    div.className = "history-row";
+    const time = new Date(e.ts).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+    div.innerHTML =
+      "<span><b>"+e.factory+" / 作業者"+e.worker+"</b>　"+e.label+
+      ' <span class="badge">R'+e.rating+"</span></span><span>"+time+"</span>";
+    els.history.appendChild(div);
+  });
+}
+
+function drawPieChart(s){
+  const canvas = els.pieChart;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = Math.max(320, rect.width);
+  const cssH = Math.max(260, rect.height);
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  if(s.total === 0){
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "14px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("まだ集計データがありません", cssW/2, cssH/2);
+    return;
+  }
+
+  const values = [s.value,s.support,s.loss];
+  const labels = ["価値作業","付帯作業","ロス作業"];
+  const colors = ["#0b78c4","#9e9e9e","#000000"];
+
+  const cx = cssW * 0.36;
+  const cy = cssH * 0.5;
+  const radius = Math.min(cssW*0.28, cssH*0.42);
+  let start = -Math.PI/2;
+
+  values.forEach((v,i) => {
+    const angle = Math.PI*2*(v/s.total);
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,radius,start,start+angle);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    if(v > 0){
+      const mid = start + angle/2;
+      const tx = cx + Math.cos(mid)*radius*0.58;
+      const ty = cy + Math.sin(mid)*radius*0.58;
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "700 14px -apple-system, sans-serif";
+      ctx.fillText(labels[i],tx,ty-9);
+      ctx.font = "700 17px -apple-system, sans-serif";
+      ctx.fillText(pct(v,s.total)+"%",tx,ty+13);
+    }
+    start += angle;
+  });
+
+  const lx = cssW*0.70;
+  const ly = cssH*0.30;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  labels.forEach((label,i) => {
+    const y = ly + i*52;
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(lx,y-10,18,18);
+    ctx.fillStyle = "#172033";
+    ctx.font = "700 13px -apple-system, sans-serif";
+    ctx.fillText(label,lx+28,y);
+    ctx.font = "13px -apple-system, sans-serif";
+    ctx.fillText(pct(values[i],s.total)+"%",lx+122,y);
+    ctx.fillText(String(values[i]),lx+175,y);
+  });
 }
 
 function renderSessions(){
- sessionList.innerHTML="";
- Object.values(db.sessions).sort((a,b)=>new Date(b.updated)-new Date(a.updated)).forEach(s=>{
-   const div=document.createElement("div");div.className="session-item";
-   const meta=document.createElement("div");meta.innerHTML=`<strong>${s.name}</strong><br><span>${s.events.length}件 / ${new Date(s.updated).toLocaleString("ja-JP")}</span>`;
-   const open=document.createElement("button");open.className="action";open.textContent=s.id===db.currentId?"使用中":"開く";open.disabled=s.id===db.currentId;
-   open.onclick=()=>{db.currentId=s.id;saveDB();renameSession.value=current().name;renderAll();switchPage("measure")};
-   const del=document.createElement("button");del.className="action danger";del.textContent="削除";
-   del.onclick=()=>{if(Object.keys(db.sessions).length<=1)return alert("最低1件は残してください");if(confirm(`「${s.name}」を削除しますか？`)){delete db.sessions[s.id];if(db.currentId===s.id)db.currentId=Object.keys(db.sessions)[0];saveDB();renderAll()}};
-   div.append(meta,open,del);sessionList.appendChild(div);
- });
- renameSession.value=current().name;
-}
-function renderAll(){renderMeasure();renderSummary();renderSessions()}
+  els.sessionList.innerHTML = "";
+  const sessions = Object.values(db.sessions).sort((a,b) => new Date(b.updated)-new Date(a.updated));
+  sessions.forEach(s => {
+    const row = document.createElement("div");
+    row.className = "session-row";
 
-function switchPage(name){
- document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
- document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===name));
- if(name==="summary"){setTimeout(renderSummary,60);setTimeout(renderSummary,250);}
-}
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchPage(t.dataset.page));
-goSummary.onclick=()=>switchPage("summary");
+    const meta = document.createElement("div");
+    meta.innerHTML = "<strong>"+s.name+"</strong><br><span>"+s.events.length+"件 / "+new Date(s.updated).toLocaleString("ja-JP")+"</span>";
 
-undo.onclick=()=>{if(current().events.length){current().events.pop();saveDB();renderAll()}};
-quickSave.onclick=saveSession.onclick=()=>{current().updated=new Date().toISOString();saveDB();renderAll();alert("保存しました")};
+    const open = document.createElement("button");
+    open.className = "action";
+    open.textContent = s.id === db.currentId ? "使用中" : "開く";
+    open.disabled = s.id === db.currentId;
+    open.addEventListener("click", () => {
+      db.currentId = s.id;
+      saveDB();
+      renderAll();
+      switchPage("measure");
+    });
+
+    const del = document.createElement("button");
+    del.className = "action danger-text";
+    del.textContent = "削除";
+    del.addEventListener("click", () => {
+      if(Object.keys(db.sessions).length <= 1){
+        alert("最低1件は残してください");
+        return;
+      }
+      if(confirm("「"+s.name+"」を削除しますか？")){
+        delete db.sessions[s.id];
+        if(db.currentId === s.id) db.currentId = Object.keys(db.sessions)[0];
+        saveDB();
+        renderAll();
+      }
+    });
+
+    row.appendChild(meta);
+    row.appendChild(open);
+    row.appendChild(del);
+    els.sessionList.appendChild(row);
+  });
+
+  els.renameInput.value = currentSession().name;
+}
+
+function renderAll(){
+  renderMeasure();
+  renderSummary();
+  renderSessions();
+}
+
+function switchPage(pageName){
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-"+pageName));
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.page === pageName));
+  if(pageName === "summary"){
+    setTimeout(renderSummary,50);
+    setTimeout(renderSummary,250);
+  }
+}
 
 function exportCSV(){
- const rows=[["データ名","日時","工場","作業者","分類","作業項目","作業レーティング"]];
- current().events.forEach(e=>rows.push([current().name,new Date(e.ts).toLocaleString("ja-JP"),e.factory,"作業者"+e.worker,e.type,e.label,e.rating]));
- const csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");
- const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download=current().name.replace(/[\\/:*?"<>|]/g,"_")+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const rows = [["データ名","日時","工場","作業者","分類","作業項目","作業レーティング"]];
+  currentSession().events.forEach(e => {
+    const typeLabel = e.type === "value" ? "価値作業" : e.type === "support" ? "付帯作業" : "ロス作業";
+    rows.push([currentSession().name,new Date(e.ts).toLocaleString("ja-JP"),e.factory,"作業者"+e.worker,typeLabel,e.label,e.rating]);
+  });
+  const csv = rows.map(r => r.map(v => '"'+String(v ?? "").replaceAll('"','""')+'"').join(",")).join("\n");
+  const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = currentSession().name.replace(/[\\/:*?"<>|]/g,"_") + ".csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url),1000);
 }
-csvCurrent.onclick=csvSession.onclick=exportCSV;
 
-newSession.onclick=()=>{
- const name=newSessionName.value.trim()||nowName(),s=blankSession(name);db.sessions[s.id]=s;db.currentId=s.id;newSessionName.value="";saveDB();renderAll();switchPage("measure");
-};
-renameBtn.onclick=()=>{const n=renameSession.value.trim();if(n){current().name=n;current().updated=new Date().toISOString();saveDB();renderAll()}};
-clearCurrent.onclick=()=>{if(confirm("現在の測定データをすべて消去しますか？")){current().events=[];current().updated=new Date().toISOString();saveDB();renderAll()}};
-exportBackup.onclick=()=>{
- const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download="電機鉄工_WS_バックアップ.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-};
-document.querySelectorAll(".factorySave").forEach(b=>b.onclick=()=>{
- const i=+b.dataset.i,n=document.getElementById("factoryName"+i).value.trim();if(!n)return;
- const old=db.factories[i];db.factories[i]=n;
- Object.values(db.sessions).forEach(s=>s.events.forEach(e=>{if(e.factory===old)e.factory=n}));
- saveDB();refreshSelectors();renderAll();
+function scheduleTimer(){
+  if(timerHandle){
+    clearTimeout(timerHandle);
+    timerHandle = null;
+  }
+
+  const mode = els.modeSelect.value;
+  if(mode === "manual"){
+    els.timingSelect.style.display = "none";
+    els.nextObs.textContent = "手動";
+    return;
+  }
+  els.timingSelect.style.display = "block";
+
+  let [minSec,maxSec] = els.timingSelect.value.split(",").map(Number);
+  if(mode === "fixed"){
+    const avg = Math.round((minSec+maxSec)/2);
+    minSec = avg;
+    maxSec = avg;
+  }
+  const sec = Math.floor(Math.random()*(maxSec-minSec+1))+minSec;
+  const target = new Date(Date.now()+sec*1000);
+  els.nextObs.textContent = target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+
+  timerHandle = setTimeout(() => {
+    alert("観測タイミングです");
+    scheduleTimer();
+  },sec*1000);
+}
+
+function renameFactory(index){
+  const input = [els.factoryName0,els.factoryName1,els.factoryName2][index];
+  const newName = input.value.trim();
+  if(!newName) return;
+  const oldName = db.factories[index];
+  db.factories[index] = newName;
+  Object.values(db.sessions).forEach(s => {
+    s.events.forEach(e => {
+      if(e.factory === oldName) e.factory = newName;
+    });
+  });
+  saveDB();
+  refreshSelectors();
+  renderAll();
+}
+
+// events
+document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => switchPage(btn.dataset.page)));
+
+els.factorySelect.addEventListener("change", renderMeasure);
+els.workerSelect.addEventListener("change", renderMeasure);
+els.filterFactory.addEventListener("change", renderSummary);
+els.filterWorker.addEventListener("change", renderSummary);
+
+els.undoBtn.addEventListener("click", () => {
+  if(currentSession().events.length){
+    currentSession().events.pop();
+    currentSession().updated = new Date().toISOString();
+    saveDB();
+    renderAll();
+  }
 });
 
-filterFactory.onchange=filterWorker.onchange=chartMode.onchange=renderSummary;
-factory.onchange=worker.onchange=renderMeasure;
+els.saveBtn.addEventListener("click", () => {
+  currentSession().updated = new Date().toISOString();
+  saveDB();
+  alert("保存しました");
+});
+els.summaryBtn.addEventListener("click", () => switchPage("summary"));
+els.csvBtn.addEventListener("click", exportCSV);
+els.csvSessionBtn.addEventListener("click", exportCSV);
 
-function applyTiming(){
- if(timer){clearTimeout(timer);clearInterval(timer);timer=null}
- if(mode.value==="manual"){timing.style.display="none";nextObs.textContent="手動";return}
- timing.style.display="block";
- let min,max;
- if(mode.value==="fixed"){
-   const parts=timing.value.split(",").map(Number);min=max=Math.round((parts[0]+parts[1])/2);
- }else [min,max]=timing.value.split(",").map(Number);
- const sec=Math.floor(Math.random()*(max-min+1))+min,target=new Date(Date.now()+sec*1000);
- nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
- timer=setTimeout(()=>{alert("観測タイミングです");applyTiming()},sec*1000);
+els.newSessionBtn.addEventListener("click", () => {
+  const s = makeSession(els.newSessionName.value.trim());
+  db.sessions[s.id] = s;
+  db.currentId = s.id;
+  els.newSessionName.value = "";
+  saveDB();
+  renderAll();
+  switchPage("measure");
+});
+
+els.renameBtn.addEventListener("click", () => {
+  const name = els.renameInput.value.trim();
+  if(!name) return;
+  currentSession().name = name;
+  currentSession().updated = new Date().toISOString();
+  saveDB();
+  renderAll();
+});
+
+els.saveSessionBtn.addEventListener("click", () => {
+  currentSession().updated = new Date().toISOString();
+  saveDB();
+  alert("保存しました");
+});
+
+els.clearBtn.addEventListener("click", () => {
+  if(confirm("現在の測定データをすべて消去しますか？")){
+    currentSession().events = [];
+    currentSession().updated = new Date().toISOString();
+    saveDB();
+    renderAll();
+  }
+});
+
+els.backupBtn.addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "電機鉄工_WS_バックアップ.json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url),1000);
+});
+
+document.querySelectorAll(".factoryRenameBtn").forEach(btn => {
+  btn.addEventListener("click", () => renameFactory(Number(btn.dataset.index)));
+});
+
+els.modeSelect.addEventListener("change", scheduleTimer);
+els.timingSelect.addEventListener("change", scheduleTimer);
+window.addEventListener("resize", () => {
+  if(document.getElementById("page-summary").classList.contains("active")) renderSummary();
+});
+
+// boot
+loadDB();
+refreshSelectors();
+buildWorkButtons();
+renderAll();
+scheduleTimer();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 }
-mode.onchange=timing.onchange=applyTiming;
-
-window.addEventListener("resize",()=>{if(document.getElementById("page-summary").classList.contains("active"))renderSummary()});
-
-
-// iPad Safari compatibility: explicitly resolve all DOM elements
-const factory=document.getElementById("factory");
-const worker=document.getElementById("worker");
-const rating=document.getElementById("rating");
-const mode=document.getElementById("mode");
-const timing=document.getElementById("timing");
-const filterFactory=document.getElementById("filterFactory");
-const filterWorker=document.getElementById("filterWorker");
-const chartMode=document.getElementById("chartMode");
-
-const mTotal=document.getElementById("mTotal");
-const mValue=document.getElementById("mValue");
-const mSupport=document.getElementById("mSupport");
-const mLoss=document.getElementById("mLoss");
-const mRating=document.getElementById("mRating");
-const nextObs=document.getElementById("nextObs");
-
-const sTotal=document.getElementById("sTotal");
-const sValue=document.getElementById("sValue");
-const sSupport=document.getElementById("sSupport");
-const sLoss=document.getElementById("sLoss");
-const sRating=document.getElementById("sRating");
-const sTarget=document.getElementById("sTarget");
-
-const summaryTable=document.getElementById("summaryTable");
-const history=document.getElementById("history");
-const currentSessionLabel=document.getElementById("currentSessionLabel");
-const sessionList=document.getElementById("sessionList");
-const renameSession=document.getElementById("renameSession");
-const newSessionName=document.getElementById("newSessionName");
-
-const undo=document.getElementById("undo");
-const quickSave=document.getElementById("quickSave");
-const goSummary=document.getElementById("goSummary");
-const csvCurrent=document.getElementById("csvCurrent");
-const newSession=document.getElementById("newSession");
-const renameBtn=document.getElementById("renameBtn");
-const saveSession=document.getElementById("saveSession");
-const csvSession=document.getElementById("csvSession");
-const clearCurrent=document.getElementById("clearCurrent");
-const exportBackup=document.getElementById("exportBackup");
-
-ensureDB();refreshSelectors();renderButtons();renderAll();applyTiming();
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 </script>
 </body>
 </html>

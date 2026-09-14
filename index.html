@@ -122,6 +122,29 @@ th:first-child,td:first-child{text-align:left}
   #page-summary .hero-chart{height:380px!important}
 }
 
+
+/* V9 */
+#page-summary .hero-filters{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 14px
+}
+#page-summary .hero-filters select{
+  min-height:52px;font-size:18px;font-weight:800;border:1px solid var(--border);
+  border-radius:12px;background:#fff;padding:8px 12px;color:#172033
+}
+.pareto-controls{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.pareto-filter{
+  border:1px solid var(--border);background:#fff;border-radius:999px;
+  padding:8px 13px;font-size:13px;font-weight:800;color:#475569
+}
+.pareto-filter.active{background:#172033;color:#fff;border-color:#172033}
+.pareto-note{font-size:12px;color:var(--muted);margin:4px 0 10px}
+.pareto-chart{height:390px;position:relative;overflow:hidden}
+.pareto-chart canvas{width:100%;height:100%}
+@media(max-width:700px){
+  #page-summary .hero-filters select{font-size:16px;min-height:48px}
+  .pareto-chart{height:360px}
+}
+
 </style>
 </head>
 <body>
@@ -213,19 +236,16 @@ th:first-child,td:first-child{text-align:left}
       <div class="hero-metric"><span>ロス作業</span><b id="sLoss">0%</b></div>
     </div>
 
+    <div class="hero-filters">
+      <select id="filterFactory" aria-label="工場"></select>
+      <select id="filterWorker" aria-label="作業者"></select>
+    </div>
+
     <div class="hero-chart"><canvas id="pieChart"></canvas></div>
     <div class="scroll-hint">↓ スクロールすると詳細分析を確認できます</div>
   </div>
 
   <div class="detail-heading">詳細分析</div>
-
-  <div class="card">
-    <div class="section-title">集計条件</div>
-    <div class="filters">
-      <select id="filterFactory"></select>
-      <select id="filterWorker"></select>
-    </div>
-  </div>
 
   <div class="card">
     <div class="metrics">
@@ -246,6 +266,18 @@ th:first-child,td:first-child{text-align:left}
         <tbody id="summaryTable"></tbody>
       </table>
     </div>
+  </div>
+
+  <div class="card pareto-card">
+    <div class="section-title">作業項目の詳細内訳</div>
+    <div class="pareto-controls">
+      <button type="button" class="pareto-filter active" data-pareto="ALL">全項目</button>
+      <button type="button" class="pareto-filter" data-pareto="value">価値作業</button>
+      <button type="button" class="pareto-filter" data-pareto="support">付帯作業</button>
+      <button type="button" class="pareto-filter" data-pareto="loss">ロス作業</button>
+    </div>
+    <div class="pareto-note" id="paretoNote">多い作業から順に表示します</div>
+    <div class="pareto-chart"><canvas id="paretoChart"></canvas></div>
   </div>
 
   <div class="card">
@@ -349,6 +381,8 @@ const els = {
   sSupportDetail: document.getElementById("sSupportDetail"),
   sLossDetail: document.getElementById("sLossDetail"),
   pieChart: document.getElementById("pieChart"),
+  paretoChart: document.getElementById("paretoChart"),
+  paretoNote: document.getElementById("paretoNote"),
   summaryTable: document.getElementById("summaryTable"),
   history: document.getElementById("history"),
   newSessionName: document.getElementById("newSessionName"),
@@ -373,6 +407,7 @@ let db = {
 };
 
 let timerHandle = null;
+let paretoType = "ALL";
 
 function makeId(){
   return "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
@@ -465,14 +500,19 @@ function pct(n,d){
   return d ? Math.round(n / d * 100) : 0;
 }
 
+function categoryKey(type,label){
+  return type + "::" + label;
+}
+
 function calcStats(events){
   const s = {total:events.length,value:0,support:0,loss:0,ratingSum:0,ratingCount:0,items:{}};
-  CATEGORIES.forEach(c => s.items[c.label] = 0);
+  CATEGORIES.forEach(c => s.items[categoryKey(c.type,c.label)] = 0);
   events.forEach(e => {
     if(e.type === "value") s.value++;
     else if(e.type === "support") s.support++;
     else if(e.type === "loss") s.loss++;
-    s.items[e.label] = (s.items[e.label] || 0) + 1;
+    const key = categoryKey(e.type,e.label);
+    s.items[key] = (s.items[key] || 0) + 1;
     if(Number.isFinite(Number(e.rating))){
       s.ratingSum += Number(e.rating);
       s.ratingCount++;
@@ -558,7 +598,7 @@ function buildWorkButtons(){
 
     const add = document.createElement("button");
     add.className = "add-btn";
-    add.innerHTML = c.label + '<span class="count" id="count-' + safeId(c.label) + '">0回</span>';
+    add.innerHTML = c.label + '<span class="count" id="count-' + safeId(categoryKey(c.type,c.label)) + '">0回</span>';
     add.addEventListener("click", () => addEvent(c));
 
     wrap.appendChild(minus);
@@ -592,7 +632,7 @@ function removeLatestMatching(category){
   const w = els.workerSelect.value;
   for(let i=events.length-1;i>=0;i--){
     const e = events[i];
-    if(e.factory === f && e.worker === w && e.label === category.label){
+    if(e.factory === f && e.worker === w && e.type === category.type && e.label === category.label){
       events.splice(i,1);
       currentSession().updated = new Date().toISOString();
       saveDB();
@@ -615,8 +655,9 @@ function renderMeasure(){
   els.sessionLabel.textContent = currentSession().name;
 
   CATEGORIES.forEach(c => {
-    const node = document.getElementById("count-" + safeId(c.label));
-    if(node) node.textContent = (s.items[c.label] || 0) + "回";
+    const key = categoryKey(c.type,c.label);
+    const node = document.getElementById("count-" + safeId(key));
+    if(node) node.textContent = (s.items[key] || 0) + "回";
   });
 }
 
@@ -640,6 +681,7 @@ function renderSummary(){
   renderSummaryTable(s);
   renderHistory(events);
   drawPieChart(s);
+  drawParetoChart(events, paretoType);
 }
 
 function renderSummaryTable(s){
@@ -744,6 +786,129 @@ function drawPieChart(s){
     ctx.font = "13px -apple-system, sans-serif";
     ctx.fillText(pct(values[i],s.total)+"%",lx+122,y);
     ctx.fillText(String(values[i]),lx+175,y);
+  });
+}
+
+
+function paretoTypeLabel(type){
+  if(type === "value") return "価値作業";
+  if(type === "support") return "付帯作業";
+  if(type === "loss") return "ロス作業";
+  return "全項目";
+}
+
+function drawParetoChart(events, typeFilter){
+  const canvas = els.paretoChart;
+  if(!canvas) return;
+
+  const selected = typeFilter === "ALL" ? events : events.filter(e => e.type === typeFilter);
+  const map = new Map();
+
+  selected.forEach(e => {
+    const key = categoryKey(e.type,e.label);
+    const current = map.get(key) || {type:e.type,label:e.label,count:0};
+    current.count++;
+    map.set(key,current);
+  });
+
+  const rows = [...map.values()].sort((a,b) => b.count - a.count || a.label.localeCompare(b.label,"ja"));
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = Math.max(320, rect.width);
+  const cssH = Math.max(320, rect.height);
+  canvas.width = Math.floor(cssW*dpr);
+  canvas.height = Math.floor(cssH*dpr);
+
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const total = rows.reduce((n,r) => n+r.count,0);
+  els.paretoNote.textContent = paretoTypeLabel(typeFilter) + "：" + total + "打点 ／ 多い順に表示";
+
+  if(total === 0){
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "14px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("該当するデータがありません",cssW/2,cssH/2);
+    return;
+  }
+
+  const maxCount = Math.max(...rows.map(r=>r.count));
+  const left = 112;
+  const right = 46;
+  const top = 18;
+  const bottom = 34;
+  const plotW = cssW-left-right;
+  const plotH = cssH-top-bottom;
+  const rowH = plotH / Math.max(rows.length,1);
+  const barH = Math.max(10, Math.min(24,rowH*0.56));
+
+  ctx.font = "12px -apple-system, sans-serif";
+  ctx.textBaseline = "middle";
+
+  let cumulative = 0;
+  const linePoints = [];
+
+  rows.forEach((r,i) => {
+    const y = top + rowH*i + rowH/2;
+    const barW = maxCount ? (r.count/maxCount)*plotW : 0;
+    cumulative += r.count;
+    const cumPct = cumulative/total*100;
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#334155";
+    ctx.fillText(r.label,left-10,y);
+
+    ctx.fillStyle = r.type === "value" ? "#0b78c4" : r.type === "support" ? "#9e9e9e" : "#1f2937";
+    ctx.fillRect(left,y-barH/2,barW,barH);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#172033";
+    ctx.font = "700 12px -apple-system, sans-serif";
+    ctx.fillText(String(r.count),Math.min(left+barW+6,cssW-28),y);
+    ctx.font = "12px -apple-system, sans-serif";
+
+    linePoints.push({
+      x:left + (cumPct/100)*plotW,
+      y:y
+    });
+  });
+
+  // Bottom 0-100% scale for cumulative line
+  ctx.strokeStyle = "#d8dee8";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(left,cssH-bottom+2);
+  ctx.lineTo(left+plotW,cssH-bottom+2);
+  ctx.stroke();
+
+  [0,20,40,60,80,100].forEach(v => {
+    const x = left + (v/100)*plotW;
+    ctx.fillStyle="#7b8494";
+    ctx.textAlign="center";
+    ctx.font="10px -apple-system, sans-serif";
+    ctx.fillText(v+"%",x,cssH-12);
+  });
+
+  ctx.strokeStyle="#172033";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  linePoints.forEach((pt,i)=>{
+    if(i===0) ctx.moveTo(pt.x,pt.y);
+    else ctx.lineTo(pt.x,pt.y);
+  });
+  ctx.stroke();
+
+  linePoints.forEach(pt=>{
+    ctx.beginPath();
+    ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2);
+    ctx.fillStyle="#fff";
+    ctx.fill();
+    ctx.strokeStyle="#172033";
+    ctx.lineWidth=2;
+    ctx.stroke();
   });
 }
 
@@ -946,6 +1111,15 @@ document.querySelectorAll(".factoryRenameBtn").forEach(btn => {
 
 els.modeSelect.addEventListener("change", scheduleTimer);
 els.timingSelect.addEventListener("change", scheduleTimer);
+
+document.querySelectorAll(".pareto-filter").forEach(btn => {
+  btn.addEventListener("click", () => {
+    paretoType = btn.dataset.pareto;
+    document.querySelectorAll(".pareto-filter").forEach(b => b.classList.toggle("active", b === btn));
+    renderSummary();
+  });
+});
+
 window.addEventListener("resize", () => {
   if(document.getElementById("page-summary").classList.contains("active")) renderSummary();
 });

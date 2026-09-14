@@ -29,7 +29,7 @@ header{
 .header-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 h1{font-size:18px;margin:0}
 .session-label{font-size:11px;color:var(--muted);max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(92px,1fr));gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:1px}
 .tab{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 4px;font-weight:800;font-size:12px}
 .tab.active{background:#2f5bd8;color:#fff;border-color:#2f5bd8}
 .wrap{max-width:1180px;margin:auto;padding:8px}
@@ -162,6 +162,68 @@ th:first-child,td:first-child{text-align:left}
 .benefit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.benefit-grid div{background:#f8fafc;border-radius:12px;padding:12px}.benefit-grid b{display:block;font-size:14px;margin-bottom:4px}.benefit-grid span{font-size:11px;color:#64748b}
 @media(max-width:700px){.info-hero h2{font-size:24px}.accuracy-grid b{font-size:21px}.accuracy-grid strong{font-size:11px}}
 
+
+/* V12: dynamic master settings + whole comparison */
+.entity-list{display:grid;gap:7px;margin:9px 0 10px}
+.entity-row{display:grid;grid-template-columns:minmax(150px,1fr) auto auto;gap:6px;align-items:center}
+.entity-row.inactive{opacity:.62}
+.entity-row .status{font-size:10px;color:var(--muted);margin-left:6px}
+.entity-add{display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:8px}
+.entity-add .action{min-width:130px}
+.end-btn{color:#7c4a03;background:#fffaf0}
+.restore-btn{color:#166534;background:#f0fdf4}
+
+.compare-hero{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:14px;
+  background:linear-gradient(135deg,#172033,#334155);color:#fff;border-radius:18px;
+  padding:20px 22px;margin-bottom:10px
+}
+.compare-kicker{font-size:11px;letter-spacing:.16em;font-weight:900;opacity:.7}
+.compare-hero h2{font-size:28px;margin:4px 0 5px}
+.compare-hero p{font-size:12px;opacity:.82;margin:0}
+.compare-switch{display:flex;gap:5px;background:rgba(255,255,255,.12);padding:4px;border-radius:12px}
+.compare-mode{border:0;border-radius:9px;background:transparent;color:#fff;padding:10px 15px;font-weight:900;white-space:nowrap}
+.compare-mode.active{background:#fff;color:#172033}
+.compare-card{padding:16px!important}
+.compare-title{font-size:18px!important;margin-bottom:4px!important}
+.compare-note{font-size:11px;color:var(--muted);margin-bottom:12px}
+.compare-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
+.compare-unit{
+  flex:0 0 260px;border:1px solid var(--border);border-radius:15px;background:#fff;padding:12px;
+  scroll-snap-align:start
+}
+.compare-unit h3{font-size:16px;text-align:center;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compare-unit .obs{text-align:center;font-size:10px;color:var(--muted);margin-bottom:5px}
+.compare-pie{height:190px}
+.compare-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}
+.compare-legend div{text-align:center;border-radius:8px;padding:7px 2px;background:#f8fafc}
+.compare-legend span{display:block;font-size:9px;color:var(--muted)}
+.compare-legend b{display:block;font-size:15px;margin-top:2px}
+.compare-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:11px}
+.compare-table{min-width:680px;margin:0}
+.compare-table th{position:sticky;top:0;background:#f8fafc;z-index:1;white-space:nowrap}
+.compare-table th:first-child,.compare-table td:first-child{position:sticky;left:0;background:#fff;z-index:2;min-width:150px}
+.compare-table thead th:first-child{background:#f8fafc;z-index:3}
+.compare-table tr.group-row td{font-weight:900;background:#f1f5f9!important;color:#334155}
+.compare-table td.zero{color:#cbd5e1}
+
+.ci-example{margin-top:16px;border:1px solid #bfdbfe;background:#f6fbff;border-radius:14px;padding:14px}
+.ci-example-head{font-size:14px;font-weight:900;color:#0b5f9d;margin-bottom:10px}
+.ci-example-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.ci-example-flow>div:not(.ci-arrow){background:#fff;border:1px solid #dbeafe;border-radius:11px;padding:10px 13px;text-align:center;min-width:115px}
+.ci-example-flow b{display:block;font-size:20px}.ci-example-flow span{display:block;font-size:10px;color:#64748b;margin-top:2px}
+.ci-example-flow .ci-result{border:2px solid #0b78c4!important}.ci-arrow{font-size:20px;font-weight:900;color:#94a3b8}
+.ci-example p{font-size:11px;line-height:1.65;color:#475569;margin:10px 0 0;text-align:center}
+
+@media(max-width:700px){
+  .compare-hero{align-items:stretch;flex-direction:column}
+  .compare-switch{align-self:stretch}
+  .compare-mode{flex:1}
+  .compare-unit{flex-basis:235px}
+  .entity-row{grid-template-columns:1fr auto}
+  .entity-row .end-btn,.entity-row .restore-btn{grid-column:2}
+}
+
 </style>
 </head>
 <body>
@@ -173,6 +235,7 @@ th:first-child,td:first-child{text-align:left}
   <div class="tabs">
     <button class="tab active" data-page="measure">測定</button>
     <button class="tab" data-page="summary">集計・グラフ</button>
+    <button class="tab" data-page="compare">全体比較</button>
     <button class="tab" data-page="data">データ管理</button>
     <button class="tab" data-page="info">WS情報</button>
   </div>
@@ -337,6 +400,18 @@ th:first-child,td:first-child{text-align:left}
     </div>
     <div class="accuracy-line"><span>粗く把握</span><div class="line"></div><span>より精密に把握</span></div>
     <p class="info-small">※必要観測数は、信頼水準・許容誤差・対象となる作業比率によって変わります。「200回なら信頼度95％」と一律に決まるものではありません。</p>
+
+    <div class="ci-example">
+      <div class="ci-example-head">具体例：200回観測したら？</div>
+      <div class="ci-example-flow">
+        <div><b>200回</b><span>観測</span></div>
+        <div class="ci-arrow">→</div>
+        <div><b>50％</b><span>対象作業を観測</span></div>
+        <div class="ci-arrow">→</div>
+        <div class="ci-result"><b>約43〜57％</b><span>95％信頼区間の目安</span></div>
+      </div>
+      <p>200回のうち50％が対象作業だった場合、真の作業割合は<strong>約43.1〜56.9％</strong>の範囲にあると推定します（通常の正規近似による目安）。</p>
+    </div>
   </div>
 
   <div class="card current-accuracy">
@@ -353,6 +428,38 @@ th:first-child,td:first-child{text-align:left}
       <div><b>改善の着眼点</b><span>何に時間を使っているか</span></div>
       <div><b>比較</b><span>工場・作業者ごとの差</span></div>
       <div><b>改善効果</b><span>改善前後の変化を確認</span></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="page" id="page-compare">
+  <div class="compare-hero">
+    <div>
+      <div class="compare-kicker">WHOLE VIEW</div>
+      <h2>全体比較</h2>
+      <p>全体を並べて「どこに違いがあるか」を見つけるページです。</p>
+    </div>
+    <div class="compare-switch" role="group" aria-label="比較対象">
+      <button class="compare-mode active" data-compare-mode="factory">工場別</button>
+      <button class="compare-mode" data-compare-mode="worker">作業者別</button>
+    </div>
+  </div>
+
+  <div class="card compare-card">
+    <div class="section-title compare-title" id="compareChartTitle">工場別 作業構成</div>
+    <div class="compare-note">円グラフは横にスクロールできます。各対象の「価値・付帯・ロス」を同じ尺度で比較します。</div>
+    <div class="compare-strip" id="compareStrip"></div>
+  </div>
+
+  <div class="card compare-card">
+    <div class="section-title compare-title" id="compareTableTitle">工場別 項目打点数</div>
+    <div class="compare-note">下の表で、差が生まれている具体的な作業項目を確認できます。</div>
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead id="compareTableHead"></thead>
+        <tbody id="compareTableBody"></tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -381,10 +488,23 @@ th:first-child,td:first-child{text-align:left}
   </div>
 
   <div class="card">
-    <div class="section-title">工場名設定</div>
-    <div class="inline"><input id="factoryName0"><button class="action factoryRenameBtn" data-index="0">変更</button></div>
-    <div class="inline"><input id="factoryName1"><button class="action factoryRenameBtn" data-index="1">変更</button></div>
-    <div class="inline"><input id="factoryName2"><button class="action factoryRenameBtn" data-index="2">変更</button></div>
+    <div class="section-title">工場設定</div>
+    <p class="small">必要な数だけ追加できます。「使用終了」にしても過去の観測データは残ります。</p>
+    <div class="entity-list" id="factorySettingsList"></div>
+    <div class="entity-add">
+      <input id="newFactoryName" placeholder="例：第4工場">
+      <button class="action primary" id="addFactoryBtn">＋ 工場を追加</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">作業者設定</div>
+    <p class="small">作業者も必要な数だけ追加できます。名前や記号は自由に設定できます。</p>
+    <div class="entity-list" id="workerSettingsList"></div>
+    <div class="entity-add">
+      <input id="newWorkerName" placeholder="例：作業者G / 佐藤">
+      <button class="action primary" id="addWorkerBtn">＋ 作業者を追加</button>
+    </div>
   </div>
 
   <div class="card">
@@ -399,7 +519,7 @@ th:first-child,td:first-child{text-align:left}
 "use strict";
 
 const FACTORY_DEFAULTS = ["工場A","工場B","工場C"];
-const WORKERS = ["A","B","C","D","E","F"];
+const WORKER_DEFAULTS = ["A","B","C","D","E","F"];
 const CATEGORIES = [
   {type:"value",label:"切断・加工"},
   {type:"value",label:"溶接"},
@@ -466,19 +586,31 @@ const els = {
   backupBtn: document.getElementById("backupBtn"),
   sessionList: document.getElementById("sessionList"),
   sessionLabel: document.getElementById("sessionLabel"),
-  factoryName0: document.getElementById("factoryName0"),
-  factoryName1: document.getElementById("factoryName1"),
-  factoryName2: document.getElementById("factoryName2")
+  factorySettingsList: document.getElementById("factorySettingsList"),
+  workerSettingsList: document.getElementById("workerSettingsList"),
+  newFactoryName: document.getElementById("newFactoryName"),
+  newWorkerName: document.getElementById("newWorkerName"),
+  addFactoryBtn: document.getElementById("addFactoryBtn"),
+  addWorkerBtn: document.getElementById("addWorkerBtn"),
+  compareStrip: document.getElementById("compareStrip"),
+  compareTableHead: document.getElementById("compareTableHead"),
+  compareTableBody: document.getElementById("compareTableBody"),
+  compareChartTitle: document.getElementById("compareChartTitle"),
+  compareTableTitle: document.getElementById("compareTableTitle")
 };
 
 let db = {
   factories: [...FACTORY_DEFAULTS],
+  workers: [...WORKER_DEFAULTS],
+  inactiveFactories: [],
+  inactiveWorkers: [],
   currentId: null,
   sessions: {}
 };
 
 let timerHandle = null;
 let paretoType = "ALL";
+let compareMode = "factory";
 
 function makeId(){
   return "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
@@ -505,9 +637,14 @@ function loadDB(){
     if(raw) db = JSON.parse(raw);
   }catch(e){}
 
-  if(!Array.isArray(db.factories) || db.factories.length !== 3){
+  if(!Array.isArray(db.factories) || db.factories.length === 0){
     db.factories = [...FACTORY_DEFAULTS];
   }
+  if(!Array.isArray(db.workers) || db.workers.length === 0){
+    db.workers = [...WORKER_DEFAULTS];
+  }
+  if(!Array.isArray(db.inactiveFactories)) db.inactiveFactories = [];
+  if(!Array.isArray(db.inactiveWorkers)) db.inactiveWorkers = [];
   if(!db.sessions || typeof db.sessions !== "object"){
     db.sessions = {};
   }
@@ -552,15 +689,32 @@ function loadDB(){
 }
 
 function normalizeOldEvent(e){
-  const worker = String(e.worker || "A").replace("作業者","");
+  const worker = String(e.worker || db.workers[0] || "A").replace(/^作業者/,"");
   return {
     ts: e.ts || new Date().toISOString(),
     factory: e.factory || db.factories[0],
-    worker: WORKERS.includes(worker) ? worker : "A",
+    worker: worker || (db.workers[0] || "A"),
     type: e.type || "support",
     label: e.label || "その他",
     rating: Number(e.rating || 100)
   };
+}
+
+function workerLabel(worker){
+  const w = String(worker ?? "");
+  return /^[A-ZＡ-Ｚ]$/.test(w) ? "作業者" + w : w;
+}
+
+function allObservedFactories(){
+  const seen = new Set([...db.factories, ...db.inactiveFactories]);
+  currentSession().events.forEach(e => seen.add(e.factory));
+  return [...seen].filter(Boolean);
+}
+
+function allObservedWorkers(){
+  const seen = new Set([...db.workers, ...db.inactiveWorkers]);
+  currentSession().events.forEach(e => seen.add(e.worker));
+  return [...seen].filter(Boolean);
 }
 
 function currentSession(){
@@ -623,23 +777,19 @@ function refreshSelectors(){
   );
   setOptions(
     els.workerSelect,
-    WORKERS.map(w => ({value:w,label:"作業者"+w})),
+    db.workers.map(w => ({value:w,label:workerLabel(w)})),
     false
   );
   setOptions(
     els.filterFactory,
-    db.factories.map(f => ({value:f,label:f})),
+    allObservedFactories().map(f => ({value:f,label:f})),
     true
   );
   setOptions(
     els.filterWorker,
-    WORKERS.map(w => ({value:w,label:"作業者"+w})),
+    allObservedWorkers().map(w => ({value:w,label:workerLabel(w)})),
     true
   );
-
-  els.factoryName0.value = db.factories[0];
-  els.factoryName1.value = db.factories[1];
-  els.factoryName2.value = db.factories[2];
 }
 
 function getFilteredEvents(factoryValue, workerValue){
@@ -743,7 +893,7 @@ function renderSummary(){
   els.sSupport.textContent = pct(s.support,s.total) + "%";
   els.sLoss.textContent = pct(s.loss,s.total) + "%";
   els.sRating.textContent = avgRating(s);
-  els.sTarget.textContent = (f === "ALL" ? "全工場" : f) + " / " + (w === "ALL" ? "全作業者" : "作業者"+w);
+  els.sTarget.textContent = (f === "ALL" ? "全工場" : f) + " / " + (w === "ALL" ? "全作業者" : workerLabel(w));
   els.sTotalDetail.textContent = s.total;
   els.sValueDetail.textContent = pct(s.value,s.total) + "%";
   els.sSupportDetail.textContent = pct(s.support,s.total) + "%";
@@ -779,7 +929,7 @@ function renderHistory(events){
     div.className = "history-row";
     const time = new Date(e.ts).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
     div.innerHTML =
-      "<span><b>"+e.factory+" / 作業者"+e.worker+"</b>　"+e.label+
+      "<span><b>"+e.factory+" / "+workerLabel(e.worker)+"</b>　"+e.label+
       ' <span class="badge">R'+e.rating+"</span></span><span>"+time+"</span>";
     els.history.appendChild(div);
   });
@@ -1076,6 +1226,9 @@ function renderAll(){
   renderMeasure();
   renderSummary();
   renderSessions();
+  renderSettings();
+  renderInfo();
+  if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
 }
 
 
@@ -1087,7 +1240,7 @@ function renderInfo(){
   countEl.textContent = n.toLocaleString("ja-JP");
   if(n <= 0){ errorEl.textContent = "—"; return; }
   const e = 1.96 * Math.sqrt(0.25 / n) * 100;
-  errorEl.textContent = "約 ±" + e.toFixed(1) + "pt";
+  errorEl.textContent = "約 ±" + e.toFixed(1) + "ポイント";
 }
 
 function switchPage(pageName){
@@ -1097,6 +1250,10 @@ function switchPage(pageName){
     setTimeout(renderSummary,50);
     setTimeout(renderSummary,250);
   }
+  if(pageName === "compare"){
+    setTimeout(renderComparison,50);
+    setTimeout(renderComparison,250);
+  }
   if(pageName === "info") renderInfo();
 }
 
@@ -1104,7 +1261,7 @@ function exportCSV(){
   const rows = [["データ名","日時","工場","作業者","分類","作業項目","作業レーティング"]];
   currentSession().events.forEach(e => {
     const typeLabel = e.type === "value" ? "価値作業" : e.type === "support" ? "付帯作業" : "ロス作業";
-    rows.push([currentSession().name,new Date(e.ts).toLocaleString("ja-JP"),e.factory,"作業者"+e.worker,typeLabel,e.label,e.rating]);
+    rows.push([currentSession().name,new Date(e.ts).toLocaleString("ja-JP"),e.factory,workerLabel(e.worker),typeLabel,e.label,e.rating]);
   });
   const csv = rows.map(r => r.map(v => '"'+String(v ?? "").replaceAll('"','""')+'"').join(",")).join("\n");
   const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
@@ -1146,20 +1303,234 @@ function scheduleTimer(){
   },sec*1000);
 }
 
-function renameFactory(index){
-  const input = [els.factoryName0,els.factoryName1,els.factoryName2][index];
-  const newName = input.value.trim();
-  if(!newName) return;
-  const oldName = db.factories[index];
-  db.factories[index] = newName;
-  Object.values(db.sessions).forEach(s => {
-    s.events.forEach(e => {
-      if(e.factory === oldName) e.factory = newName;
+
+function nameExists(kind, name, exceptName){
+  const active = kind === "factory" ? db.factories : db.workers;
+  const inactive = kind === "factory" ? db.inactiveFactories : db.inactiveWorkers;
+  return [...active,...inactive].some(x => x === name && x !== exceptName);
+}
+
+function addMaster(kind){
+  const input = kind === "factory" ? els.newFactoryName : els.newWorkerName;
+  const name = input.value.trim();
+  if(!name) return;
+  if(nameExists(kind,name)){
+    alert("同じ名前がすでにあります");
+    return;
+  }
+  const active = kind === "factory" ? db.factories : db.workers;
+  active.push(name);
+  input.value = "";
+  saveDB();
+  refreshSelectors();
+  renderSettings();
+  renderAll();
+}
+
+function renameMaster(kind, oldName, newName){
+  newName = newName.trim();
+  if(!newName || newName === oldName) return;
+  if(nameExists(kind,newName,oldName)){
+    alert("同じ名前がすでにあります");
+    return;
+  }
+  const active = kind === "factory" ? db.factories : db.workers;
+  const inactive = kind === "factory" ? db.inactiveFactories : db.inactiveWorkers;
+  const list = active.includes(oldName) ? active : inactive;
+  const i = list.indexOf(oldName);
+  if(i >= 0) list[i] = newName;
+
+  Object.values(db.sessions).forEach(sess => {
+    sess.events.forEach(e => {
+      if(kind === "factory" && e.factory === oldName) e.factory = newName;
+      if(kind === "worker" && e.worker === oldName) e.worker = newName;
     });
   });
   saveDB();
   refreshSelectors();
+  renderSettings();
   renderAll();
+}
+
+function setMasterActive(kind, name, makeActive){
+  const active = kind === "factory" ? db.factories : db.workers;
+  const inactive = kind === "factory" ? db.inactiveFactories : db.inactiveWorkers;
+  if(!makeActive && active.length <= 1){
+    alert((kind === "factory" ? "工場" : "作業者") + "は最低1件必要です");
+    return;
+  }
+  const from = makeActive ? inactive : active;
+  const to = makeActive ? active : inactive;
+  const i = from.indexOf(name);
+  if(i >= 0){
+    from.splice(i,1);
+    if(!to.includes(name)) to.push(name);
+  }
+  saveDB();
+  refreshSelectors();
+  renderSettings();
+  renderAll();
+}
+
+function masterRow(kind,name,isActive){
+  const row = document.createElement("div");
+  row.className = "entity-row" + (isActive ? "" : " inactive");
+
+  const input = document.createElement("input");
+  input.value = name;
+  input.setAttribute("aria-label",(kind === "factory" ? "工場名" : "作業者名"));
+
+  const rename = document.createElement("button");
+  rename.className = "action";
+  rename.textContent = "変更";
+  rename.addEventListener("click",()=>renameMaster(kind,name,input.value));
+
+  const state = document.createElement("button");
+  state.className = "action " + (isActive ? "end-btn" : "restore-btn");
+  state.textContent = isActive ? "使用終了" : "再使用";
+  state.addEventListener("click",()=>setMasterActive(kind,name,!isActive));
+
+  row.appendChild(input);
+  row.appendChild(rename);
+  row.appendChild(state);
+  return row;
+}
+
+function renderSettings(){
+  if(!els.factorySettingsList || !els.workerSettingsList) return;
+  els.factorySettingsList.innerHTML = "";
+  db.factories.forEach(n => els.factorySettingsList.appendChild(masterRow("factory",n,true)));
+  db.inactiveFactories.forEach(n => els.factorySettingsList.appendChild(masterRow("factory",n,false)));
+
+  els.workerSettingsList.innerHTML = "";
+  db.workers.forEach(n => els.workerSettingsList.appendChild(masterRow("worker",n,true)));
+  db.inactiveWorkers.forEach(n => els.workerSettingsList.appendChild(masterRow("worker",n,false)));
+}
+
+function drawMiniPie(canvas, stats){
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(190, rect.width), h = Math.max(180, rect.height);
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  if(!stats.total){
+    ctx.fillStyle="#94a3b8"; ctx.font="12px -apple-system,sans-serif";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("データなし",w/2,h/2);
+    return;
+  }
+
+  const values=[stats.value,stats.support,stats.loss];
+  const colors=["#0b78c4","#9e9e9e","#111827"];
+  const cx=w/2, cy=h/2, r=Math.min(w,h)*0.37;
+  let start=-Math.PI/2;
+  values.forEach((v,i)=>{
+    const angle=Math.PI*2*v/stats.total;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+angle);ctx.closePath();
+    ctx.fillStyle=colors[i];ctx.fill();
+    ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
+    if(v){
+      const mid=start+angle/2;
+      ctx.fillStyle="#fff";ctx.font="700 12px -apple-system,sans-serif";
+      ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText(pct(v,stats.total)+"%",cx+Math.cos(mid)*r*.58,cy+Math.sin(mid)*r*.58);
+    }
+    start+=angle;
+  });
+}
+
+function compareTargets(){
+  if(compareMode === "factory"){
+    const names = allObservedFactories();
+    return names.map(name => ({
+      name,
+      label:name,
+      events:currentSession().events.filter(e=>e.factory===name)
+    }));
+  }
+  const names = allObservedWorkers();
+  return names.map(name => ({
+    name,
+    label:workerLabel(name),
+    events:currentSession().events.filter(e=>e.worker===name)
+  }));
+}
+
+function renderComparison(){
+  if(!els.compareStrip) return;
+  const targets = compareTargets();
+  const unitLabel = compareMode === "factory" ? "工場" : "作業者";
+  els.compareChartTitle.textContent = unitLabel + "別 作業構成";
+  els.compareTableTitle.textContent = unitLabel + "別 項目打点数";
+  els.compareStrip.innerHTML = "";
+
+  targets.forEach((t,idx)=>{
+    const st = calcStats(t.events);
+    const card = document.createElement("div");
+    card.className="compare-unit";
+    const title=document.createElement("h3"); title.textContent=t.label;
+    const obs=document.createElement("div"); obs.className="obs"; obs.textContent="観測 "+st.total+"回";
+    const canvas=document.createElement("canvas"); canvas.className="compare-pie";
+    const legend=document.createElement("div"); legend.className="compare-legend";
+    legend.innerHTML =
+      "<div><span>価値</span><b>"+pct(st.value,st.total)+"%</b></div>"+
+      "<div><span>付帯</span><b>"+pct(st.support,st.total)+"%</b></div>"+
+      "<div><span>ロス</span><b>"+pct(st.loss,st.total)+"%</b></div>";
+    card.append(title,obs,canvas,legend);
+    els.compareStrip.appendChild(card);
+    requestAnimationFrame(()=>drawMiniPie(canvas,st));
+  });
+
+  if(!targets.length){
+    els.compareStrip.innerHTML='<div class="small">比較できるデータがありません。</div>';
+  }
+
+  renderComparisonTable(targets);
+}
+
+function renderComparisonTable(targets){
+  els.compareTableHead.innerHTML="";
+  els.compareTableBody.innerHTML="";
+
+  const hr=document.createElement("tr");
+  const h0=document.createElement("th"); h0.textContent="作業項目"; hr.appendChild(h0);
+  targets.forEach(t=>{const th=document.createElement("th");th.textContent=t.label;hr.appendChild(th);});
+  els.compareTableHead.appendChild(hr);
+
+  const types=[
+    {type:"value",label:"価値作業"},
+    {type:"support",label:"付帯作業"},
+    {type:"loss",label:"ロス作業"}
+  ];
+
+  types.forEach(group=>{
+    const gr=document.createElement("tr"); gr.className="group-row";
+    const gd=document.createElement("td"); gd.textContent=group.label;
+    gr.appendChild(gd);
+    targets.forEach(t=>{
+      const st=calcStats(t.events); const td=document.createElement("td");
+      const n=st[group.type]; td.textContent=n+"件 ("+pct(n,st.total)+"%)"; gr.appendChild(td);
+    });
+    els.compareTableBody.appendChild(gr);
+
+    CATEGORIES.filter(c=>c.type===group.type).forEach(c=>{
+      const tr=document.createElement("tr");
+      const name=document.createElement("td"); name.textContent=c.label; tr.appendChild(name);
+      targets.forEach(t=>{
+        const n=t.events.filter(e=>e.type===c.type && e.label===c.label).length;
+        const td=document.createElement("td");td.textContent=n; if(!n)td.className="zero";tr.appendChild(td);
+      });
+      els.compareTableBody.appendChild(tr);
+    });
+  });
+
+  const total=document.createElement("tr"); total.className="group-row";
+  const td0=document.createElement("td");td0.textContent="観測数 合計";total.appendChild(td0);
+  targets.forEach(t=>{const td=document.createElement("td");td.textContent=t.events.length+"件";total.appendChild(td);});
+  els.compareTableBody.appendChild(total);
 }
 
 // events
@@ -1227,13 +1598,23 @@ els.backupBtn.addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "電機鉄工_WS_バックアップ.json";
+  a.download = "ワークサンプリング_バックアップ.json";
   a.click();
   setTimeout(() => URL.revokeObjectURL(url),1000);
 });
 
-document.querySelectorAll(".factoryRenameBtn").forEach(btn => {
-  btn.addEventListener("click", () => renameFactory(Number(btn.dataset.index)));
+
+els.addFactoryBtn.addEventListener("click",()=>addMaster("factory"));
+els.addWorkerBtn.addEventListener("click",()=>addMaster("worker"));
+els.newFactoryName.addEventListener("keydown",e=>{if(e.key==="Enter")addMaster("factory");});
+els.newWorkerName.addEventListener("keydown",e=>{if(e.key==="Enter")addMaster("worker");});
+
+document.querySelectorAll(".compare-mode").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    compareMode=btn.dataset.compareMode;
+    document.querySelectorAll(".compare-mode").forEach(b=>b.classList.toggle("active",b===btn));
+    renderComparison();
+  });
 });
 
 els.modeSelect.addEventListener("change", scheduleTimer);
@@ -1249,6 +1630,7 @@ document.querySelectorAll(".pareto-filter").forEach(btn => {
 
 window.addEventListener("resize", () => {
   if(document.getElementById("page-summary").classList.contains("active")) renderSummary();
+  if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
 });
 
 // boot

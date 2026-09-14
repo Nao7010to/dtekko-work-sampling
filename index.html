@@ -337,7 +337,7 @@ function renderSummary(){
  drawChart(ev);
 }
 function drawChart(events){
- const canvas=chart,ctx=canvas.getContext("2d"),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+ const canvas=document.getElementById("chart"),ctx=canvas.getContext("2d"),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
  canvas.width=Math.max(300,rect.width*dpr);canvas.height=Math.max(180,rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
  const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);ctx.font="11px -apple-system,sans-serif";ctx.fillStyle="#182230";
  let labels=[],vals=[];
@@ -347,6 +347,11 @@ function drawChart(events){
    const s=stats(events);labels=CATEGORIES.map(c=>c.label);vals=labels.map(l=>s.items[l]||0);
  }else{
    labels=WORKERS.map(w=>"作業者"+w);vals=WORKERS.map(w=>events.filter(e=>e.worker===w).length);
+ }
+ if(!events.length){
+   ctx.fillStyle="#687387";ctx.textAlign="center";ctx.textBaseline="middle";
+   ctx.fillText("まだ集計データがありません",W/2,H/2);
+   return;
  }
  const max=Math.max(1,...vals),left=90,right=20,top=10,bottom=10,row=(H-top-bottom)/Math.max(1,labels.length);
  labels.forEach((lab,i)=>{
@@ -377,7 +382,7 @@ function renderAll(){renderMeasure();renderSummary();renderSessions()}
 function switchPage(name){
  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===name));
- if(name==="summary")setTimeout(renderSummary,20);
+ if(name==="summary"){setTimeout(renderSummary,60);setTimeout(renderSummary,250);}
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchPage(t.dataset.page));
 goSummary.onclick=()=>switchPage("summary");
@@ -428,6 +433,49 @@ function applyTiming(){
 mode.onchange=timing.onchange=applyTiming;
 
 window.addEventListener("resize",()=>{if(document.getElementById("page-summary").classList.contains("active"))renderSummary()});
+
+
+// iPad Safari compatibility: explicitly resolve all DOM elements
+const factory=document.getElementById("factory");
+const worker=document.getElementById("worker");
+const rating=document.getElementById("rating");
+const mode=document.getElementById("mode");
+const timing=document.getElementById("timing");
+const filterFactory=document.getElementById("filterFactory");
+const filterWorker=document.getElementById("filterWorker");
+const chartMode=document.getElementById("chartMode");
+
+const mTotal=document.getElementById("mTotal");
+const mValue=document.getElementById("mValue");
+const mSupport=document.getElementById("mSupport");
+const mLoss=document.getElementById("mLoss");
+const mRating=document.getElementById("mRating");
+const nextObs=document.getElementById("nextObs");
+
+const sTotal=document.getElementById("sTotal");
+const sValue=document.getElementById("sValue");
+const sSupport=document.getElementById("sSupport");
+const sLoss=document.getElementById("sLoss");
+const sRating=document.getElementById("sRating");
+const sTarget=document.getElementById("sTarget");
+
+const summaryTable=document.getElementById("summaryTable");
+const history=document.getElementById("history");
+const currentSessionLabel=document.getElementById("currentSessionLabel");
+const sessionList=document.getElementById("sessionList");
+const renameSession=document.getElementById("renameSession");
+const newSessionName=document.getElementById("newSessionName");
+
+const undo=document.getElementById("undo");
+const quickSave=document.getElementById("quickSave");
+const goSummary=document.getElementById("goSummary");
+const csvCurrent=document.getElementById("csvCurrent");
+const newSession=document.getElementById("newSession");
+const renameBtn=document.getElementById("renameBtn");
+const saveSession=document.getElementById("saveSession");
+const csvSession=document.getElementById("csvSession");
+const clearCurrent=document.getElementById("clearCurrent");
+const exportBackup=document.getElementById("exportBackup");
 
 ensureDB();refreshSelectors();renderButtons();renderAll();applyTiming();
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));

@@ -246,6 +246,15 @@ th:first-child,td:first-child{text-align:left}
   .entity-row .end-btn,.entity-row .restore-btn{grid-column:2}
 }
 
+
+.danger-card{border:1px solid #fecaca;background:#fffafa}
+.danger-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.danger-row select{min-width:220px;flex:1}
+.danger-action{background:#fff;border:1px solid #dc2626;color:#b91c1c;font-weight:900}
+.danger-action:hover{background:#fff1f2}
+.danger-note{font-size:11px;color:#9f1239;margin-top:8px}
+@media(max-width:700px){.danger-row{flex-direction:column;align-items:stretch}.danger-row select,.danger-action{width:100%}}
+
 </style>
 </head>
 <body>
@@ -521,7 +530,18 @@ th:first-child,td:first-child{text-align:left}
   </div>
 
   <div class="card">
-    <div class="section-title">保存済みデータ</div>
+    
+  <div class="card danger-card">
+    <div class="section-title">工場単位のデータクリア</div>
+    <div class="small">現在開いている測定データの中から、選択した工場の観測データだけを削除します。工場名や他の工場、別の新規作成データには影響しません。</div>
+    <div class="danger-row">
+      <select id="clearFactorySelect" aria-label="クリアする工場"></select>
+      <button id="clearFactoryBtn" class="danger-action">選択工場の観測データをクリア</button>
+    </div>
+    <div class="danger-note">※削除後は元に戻せません。必要に応じて先にJSONバックアップを保存してください。</div>
+  </div>
+
+<div class="section-title">保存済みデータ</div>
     <div class="session-list" id="sessionList"></div>
   </div>
 </section>
@@ -607,6 +627,8 @@ const els = {
   addWorkerBtn: document.getElementById("addWorkerBtn"),
   compareChartTitle: document.getElementById("compareChartTitle"),
   compareUnified: document.getElementById("compareUnified"),
+  clearFactorySelect: document.getElementById("clearFactorySelect"),
+  clearFactoryBtn: document.getElementById("clearFactoryBtn"),
   compareTableTitle: document.getElementById("compareTableTitle")
 };
 
@@ -1208,6 +1230,59 @@ function drawParetoChart(events, typeFilter){
   ctx.lineTo(left+plotW,top+plotH);
   ctx.stroke();
 }
+
+function refreshClearFactorySelector(){
+  if(!els.clearFactorySelect) return;
+  const sess=currentSession();
+  const names=[...(sess.factories||[])];
+  sess.events.forEach(e=>{
+    if(e.factory && !names.includes(e.factory)) names.push(e.factory);
+  });
+
+  const prev=els.clearFactorySelect.value;
+  els.clearFactorySelect.innerHTML="";
+  names.forEach(name=>{
+    const opt=document.createElement("option");
+    opt.value=name;
+    const n=sess.events.filter(e=>e.factory===name).length;
+    opt.textContent=name+"（"+n+"件）";
+    els.clearFactorySelect.appendChild(opt);
+  });
+
+  if(names.includes(prev)) els.clearFactorySelect.value=prev;
+  els.clearFactoryBtn.disabled = names.length===0;
+}
+
+function clearSelectedFactoryData(){
+  if(!els.clearFactorySelect) return;
+  const factory=els.clearFactorySelect.value;
+  if(!factory) return;
+
+  const sess=currentSession();
+  const count=sess.events.filter(e=>e.factory===factory).length;
+
+  if(count===0){
+    alert("「"+factory+"」には削除する観測データがありません。");
+    return;
+  }
+
+  const ok=confirm(
+    "「"+factory+"」の観測データ "+count+"件を削除します。\\n\\n"+
+    "この操作では、工場名・他工場のデータ・別の新規作成データは削除されません。\\n"+
+    "削除した観測データは元に戻せません。\\n\\n本当に削除しますか？"
+  );
+  if(!ok) return;
+
+  sess.events=sess.events.filter(e=>e.factory!==factory);
+  sess.updated=new Date().toISOString();
+  saveDB();
+  refreshClearFactorySelector();
+  refreshSelectors();
+  renderSettings();
+  renderAll();
+  alert("「"+factory+"」の観測データ "+count+"件を削除しました。");
+}
+
 function renderSessions(){
   els.sessionList.innerHTML = "";
   const sessions = Object.values(db.sessions).sort((a,b) => new Date(b.updated)-new Date(a.updated));
@@ -1261,6 +1336,7 @@ function renderAll(){
   renderSettings();
   renderInfo();
   if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
+  refreshClearFactorySelector();
 }
 
 
@@ -1682,6 +1758,11 @@ window.addEventListener("resize", () => {
 });
 
 // boot
+
+if(els.clearFactoryBtn){
+  els.clearFactoryBtn.addEventListener("click", clearSelectedFactoryData);
+}
+
 loadDB();
 refreshSelectors();
 buildWorkButtons();

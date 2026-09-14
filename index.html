@@ -255,6 +255,23 @@ th:first-child,td:first-child{text-align:left}
 .danger-note{font-size:11px;color:#9f1239;margin-top:8px}
 @media(max-width:700px){.danger-row{flex-direction:column;align-items:stretch}.danger-row select,.danger-action{width:100%}}
 
+
+.template-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.template-bar select{min-width:180px}
+.template-note{margin-top:8px;color:#64748b}
+.category-settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.category-setting-card{border:1px solid var(--border);border-radius:14px;padding:12px;background:#fff}
+.category-setting-title{font-weight:900;font-size:15px;margin-bottom:10px}
+.item-settings-list{display:flex;flex-direction:column;gap:8px}
+.item-setting-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto;gap:6px;align-items:center}
+.item-setting-row input{min-width:0}
+.item-setting-row.inactive{opacity:.6;background:#f8fafc;border-radius:10px;padding:6px}
+.item-setting-row .move-btn{min-width:34px;padding:8px 9px}
+.item-setting-row .item-state{white-space:nowrap}
+@media(max-width:900px){
+  .category-settings{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -510,6 +527,52 @@ th:first-child,td:first-child{text-align:left}
   </div>
 
   <div class="card">
+    <div class="section-title">作業項目・テンプレート設定</div>
+    <p class="small">テンプレートは現在の測定データ専用の作業項目としてコピーされます。元テンプレート自体は変更されません。</p>
+
+    <div class="template-bar">
+      <select id="templateSelect">
+        <option value="generic">汎用</option>
+        <option value="steel">鉄工</option>
+        <option value="food">食品</option>
+        <option value="assembly">組立</option>
+        <option value="blank">空白</option>
+      </select>
+      <button class="action primary" id="applyTemplateBtn">テンプレートを適用</button>
+    </div>
+    <p class="small template-note">観測データがある状態では既存項目を上書きせず、新しい測定データを作成してテンプレートを適用します。</p>
+
+    <div class="category-settings">
+      <div class="category-setting-card value-setting">
+        <div class="category-setting-title">価値作業</div>
+        <div id="valueItemSettings" class="item-settings-list"></div>
+        <div class="entity-add">
+          <input id="newValueItem" placeholder="価値作業の項目名">
+          <button class="action primary" id="addValueItemBtn">＋ 項目追加</button>
+        </div>
+      </div>
+
+      <div class="category-setting-card support-setting">
+        <div class="category-setting-title">付帯作業</div>
+        <div id="supportItemSettings" class="item-settings-list"></div>
+        <div class="entity-add">
+          <input id="newSupportItem" placeholder="付帯作業の項目名">
+          <button class="action primary" id="addSupportItemBtn">＋ 項目追加</button>
+        </div>
+      </div>
+
+      <div class="category-setting-card loss-setting">
+        <div class="category-setting-title">ロス作業</div>
+        <div id="lossItemSettings" class="item-settings-list"></div>
+        <div class="entity-add">
+          <input id="newLossItem" placeholder="ロス作業の項目名">
+          <button class="action primary" id="addLossItemBtn">＋ 項目追加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="section-title">工場設定</div>
     <p class="small">この測定データ専用の設定です。別の「新規作成」データには影響しません。観測済みの工場は「使用終了」で過去データを残せます。</p>
     <div class="entity-list" id="factorySettingsList"></div>
@@ -553,16 +616,18 @@ th:first-child,td:first-child{text-align:left}
 
 const FACTORY_DEFAULTS = ["工場A","工場B","工場C"];
 const WORKER_DEFAULTS = ["A","B","C","D","E","F"];
-const CATEGORIES = [
+const LEGACY_CATEGORIES = [
   {type:"value",label:"切断・加工"},
   {type:"value",label:"溶接"},
   {type:"value",label:"組立・仮付け"},
-  {type:"value",label:"仕上げ"},{type:"value",label:"その他"},
+  {type:"value",label:"仕上げ"},
+  {type:"value",label:"その他"},
   {type:"support",label:"段取り"},
   {type:"support",label:"図面確認"},
   {type:"support",label:"測定・検査"},
   {type:"support",label:"材料・製品運搬"},
-  {type:"support",label:"クレーン操作・反転"},{type:"support",label:"その他"},
+  {type:"support",label:"クレーン操作・反転"},
+  {type:"support",label:"その他"},
   {type:"loss",label:"歩行"},
   {type:"loss",label:"材料・工具探し"},
   {type:"loss",label:"待ち"},
@@ -570,6 +635,54 @@ const CATEGORIES = [
   {type:"loss",label:"打合せ・指示確認"},
   {type:"loss",label:"その他"}
 ];
+
+const WORK_TEMPLATES = {
+  generic:{
+    name:"汎用",
+    items:[
+      {type:"value",label:"主作業"},{type:"value",label:"その他"},
+      {type:"support",label:"段取り・準備"},{type:"support",label:"確認・検査"},
+      {type:"support",label:"運搬"},{type:"support",label:"その他"},
+      {type:"loss",label:"歩行・移動"},{type:"loss",label:"探す"},
+      {type:"loss",label:"待ち"},{type:"loss",label:"手直し"},
+      {type:"loss",label:"打合せ・指示確認"},{type:"loss",label:"その他"}
+    ]
+  },
+  steel:{name:"鉄工",items:LEGACY_CATEGORIES},
+  food:{
+    name:"食品",
+    items:[
+      {type:"value",label:"投入"},{type:"value",label:"選別"},
+      {type:"value",label:"加工・処理"},{type:"value",label:"充填・包装"},{type:"value",label:"その他"},
+      {type:"support",label:"段取り"},{type:"support",label:"原料・資材補充"},
+      {type:"support",label:"検査"},{type:"support",label:"洗浄・清掃"},
+      {type:"support",label:"運搬"},{type:"support",label:"その他"},
+      {type:"loss",label:"歩行・移動"},{type:"loss",label:"探す"},
+      {type:"loss",label:"待ち"},{type:"loss",label:"手直し"},
+      {type:"loss",label:"打合せ・指示確認"},{type:"loss",label:"その他"}
+    ]
+  },
+  assembly:{
+    name:"組立",
+    items:[
+      {type:"value",label:"組立"},{type:"value",label:"締付"},
+      {type:"value",label:"配線・接続"},{type:"value",label:"調整"},
+      {type:"value",label:"仕上げ"},{type:"value",label:"その他"},
+      {type:"support",label:"段取り"},{type:"support",label:"部品供給"},
+      {type:"support",label:"図面・手順確認"},{type:"support",label:"測定・検査"},
+      {type:"support",label:"運搬"},{type:"support",label:"その他"},
+      {type:"loss",label:"歩行・移動"},{type:"loss",label:"探す"},
+      {type:"loss",label:"待ち"},{type:"loss",label:"手直し"},
+      {type:"loss",label:"打合せ・指示確認"},{type:"loss",label:"その他"}
+    ]
+  },
+  blank:{name:"空白",items:[]}
+};
+
+function cloneTemplate(key){
+  const src=(WORK_TEMPLATES[key]||WORK_TEMPLATES.generic).items;
+  return src.map(c=>({type:c.type,label:c.label}));
+}
 
 const STORE_KEY = "dtekko_ws_stable_v6";
 
@@ -629,7 +742,18 @@ const els = {
   compareUnified: document.getElementById("compareUnified"),
   clearFactorySelect: document.getElementById("clearFactorySelect"),
   clearFactoryBtn: document.getElementById("clearFactoryBtn"),
-  compareTableTitle: document.getElementById("compareTableTitle")
+  compareTableTitle: document.getElementById("compareTableTitle"),
+  templateSelect: document.getElementById("templateSelect"),
+  applyTemplateBtn: document.getElementById("applyTemplateBtn"),
+  valueItemSettings: document.getElementById("valueItemSettings"),
+  supportItemSettings: document.getElementById("supportItemSettings"),
+  lossItemSettings: document.getElementById("lossItemSettings"),
+  newValueItem: document.getElementById("newValueItem"),
+  newSupportItem: document.getElementById("newSupportItem"),
+  newLossItem: document.getElementById("newLossItem"),
+  addValueItemBtn: document.getElementById("addValueItemBtn"),
+  addSupportItemBtn: document.getElementById("addSupportItemBtn"),
+  addLossItemBtn: document.getElementById("addLossItemBtn")
 };
 
 let db = {
@@ -660,6 +784,9 @@ function makeSession(name){
     workers: [...WORKER_DEFAULTS],
     inactiveFactories: [],
     inactiveWorkers: [],
+    categories: cloneTemplate("generic"),
+    inactiveCategories: [],
+    templateKey: "generic",
     events: []
   };
 }
@@ -730,10 +857,20 @@ function loadDB(){
     if(!Array.isArray(sess.workers) || !sess.workers.length) sess.workers=[...(db.workers || WORKER_DEFAULTS)];
     if(!Array.isArray(sess.inactiveFactories)) sess.inactiveFactories=[...(db.inactiveFactories || [])];
     if(!Array.isArray(sess.inactiveWorkers)) sess.inactiveWorkers=[...(db.inactiveWorkers || [])];
+
+    // V18: each measurement owns its own work-item master.
+    // Existing measurements keep the old ironwork-oriented item set, so nothing disappears.
+    if(!Array.isArray(sess.categories)) sess.categories=cloneTemplate("steel");
+    if(!Array.isArray(sess.inactiveCategories)) sess.inactiveCategories=[];
+    if(!sess.templateKey) sess.templateKey="steel";
+
     sess.events=(sess.events || []).map(normalizeOldEvent);
     sess.events.forEach(e=>{
       if(e.factory && !sess.factories.includes(e.factory) && !sess.inactiveFactories.includes(e.factory)) sess.inactiveFactories.push(e.factory);
       if(e.worker && !sess.workers.includes(e.worker) && !sess.inactiveWorkers.includes(e.worker)) sess.inactiveWorkers.push(e.worker);
+      const key=categoryKey(e.type,e.label);
+      const exists=[...sess.categories,...sess.inactiveCategories].some(c=>categoryKey(c.type,c.label)===key);
+      if(!exists && e.type && e.label) sess.inactiveCategories.push({type:e.type,label:e.label});
     });
   });
   saveDB();
@@ -782,9 +919,33 @@ function categoryKey(type,label){
   return type + "::" + label;
 }
 
+function activeCategories(){
+  const sess=currentSession();
+  return Array.isArray(sess.categories) ? sess.categories : [];
+}
+
+function analysisCategories(){
+  const sess=currentSession();
+  const out=[];
+  const seen=new Set();
+  [...(sess.categories||[]),...(sess.inactiveCategories||[])].forEach(c=>{
+    const k=categoryKey(c.type,c.label);
+    if(!seen.has(k)){seen.add(k);out.push({type:c.type,label:c.label});}
+  });
+  (sess.events||[]).forEach(e=>{
+    const k=categoryKey(e.type,e.label);
+    if(!seen.has(k)){seen.add(k);out.push({type:e.type,label:e.label});}
+  });
+  return out;
+}
+
+function categoryTypeLabel(type){
+  return type==="value"?"価値作業":type==="support"?"付帯作業":"ロス作業";
+}
+
 function calcStats(events){
   const s = {total:events.length,value:0,support:0,loss:0,ratingSum:0,ratingCount:0,items:{}};
-  CATEGORIES.forEach(c => s.items[categoryKey(c.type,c.label)] = 0);
+  analysisCategories().forEach(c => s.items[categoryKey(c.type,c.label)] = 0);
   events.forEach(e => {
     if(e.type === "value") s.value++;
     else if(e.type === "support") s.support++;
@@ -862,7 +1023,7 @@ function buildWorkButtons(){
   };
   Object.values(groups).forEach(g => g.innerHTML = "");
 
-  CATEGORIES.forEach(c => {
+  activeCategories().forEach(c => {
     const wrap = document.createElement("div");
     wrap.className = "work-item " + c.type;
 
@@ -929,7 +1090,7 @@ function renderMeasure(){
   els.mRating.textContent = avgRating(s);
   els.sessionLabel.textContent = currentSession().name;
 
-  CATEGORIES.forEach(c => {
+  activeCategories().forEach(c => {
     const key = categoryKey(c.type,c.label);
     const node = document.getElementById("count-" + safeId(key));
     if(node) node.textContent = (s.items[key] || 0) + "回";
@@ -1330,10 +1491,12 @@ function renderSessions(){
 }
 
 function renderAll(){
+  buildWorkButtons();
   renderMeasure();
   renderSummary();
   renderSessions();
   renderSettings();
+  renderItemSettings();
   renderInfo();
   if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
   refreshClearFactorySelector();
@@ -1463,10 +1626,10 @@ function setMasterActive(kind,name,makeActive){
 
 function deleteMaster(kind,name){
   const n=masterObservationCount(kind,name);
-  if(n>0){alert("この"+(kind==="factory"?"工場":"作業者")+"には観測データが"+n+"件あるため完全削除できません。\\n過去データを残す場合は「使用終了」を使ってください。");return;}
+  if(n>0){alert("この"+(kind==="factory"?"工場":"作業者")+"には観測データが"+n+"件あるため削除できません。\\n過去データを残す場合は「使用終了」を使ってください。");return;}
   const {active,inactive}=masterLists(kind);
   if(active.includes(name)&&active.length<=1){alert((kind==="factory"?"工場":"作業者")+"は最低1件必要です");return;}
-  if(!confirm("「"+name+"」を完全削除しますか？"))return;
+  if(!confirm("「"+name+"」を削除しますか？"))return;
   let i=active.indexOf(name);if(i>=0)active.splice(i,1);
   i=inactive.indexOf(name);if(i>=0)inactive.splice(i,1);
   saveDB();refreshSelectors();renderSettings();renderAll();
@@ -1480,7 +1643,7 @@ function masterRow(kind,name,isActive){
   const state=document.createElement("button");
   const n=masterObservationCount(kind,name);
   if(n===0){
-    state.className="action delete-master-btn";state.textContent="完全削除";
+    state.className="action delete-master-btn";state.textContent="削除";
     state.addEventListener("click",()=>deleteMaster(kind,name));
   }else{
     state.className="action "+(isActive?"end-btn":"restore-btn");
@@ -1500,6 +1663,204 @@ function renderSettings(){
   (sess.workers||[]).forEach(n=>els.workerSettingsList.appendChild(masterRow("worker",n,true)));
   (sess.inactiveWorkers||[]).forEach(n=>els.workerSettingsList.appendChild(masterRow("worker",n,false)));
 }
+
+
+function itemObservationCount(type,label){
+  return currentSession().events.filter(e=>e.type===type && e.label===label).length;
+}
+
+function categoryNameExists(type,label,exceptLabel){
+  const sess=currentSession();
+  return [...(sess.categories||[]),...(sess.inactiveCategories||[])]
+    .some(c=>c.type===type && c.label===label && c.label!==exceptLabel);
+}
+
+function addWorkItem(type){
+  const input=type==="value"?els.newValueItem:type==="support"?els.newSupportItem:els.newLossItem;
+  const label=input.value.trim();
+  if(!label) return;
+  if(categoryNameExists(type,label)){
+    alert("同じ分類に「"+label+"」がすでにあります。");
+    return;
+  }
+  currentSession().categories.push({type,label});
+  input.value="";
+  currentSession().updated=new Date().toISOString();
+  saveDB();
+  buildWorkButtons();
+  renderItemSettings();
+  renderAll();
+}
+
+function renameWorkItem(type,oldLabel,newLabel){
+  newLabel=newLabel.trim();
+  if(!newLabel || newLabel===oldLabel) return;
+  if(categoryNameExists(type,newLabel,oldLabel)){
+    alert("同じ分類に「"+newLabel+"」がすでにあります。");
+    return;
+  }
+  const sess=currentSession();
+  const lists=[sess.categories||[],sess.inactiveCategories||[]];
+  lists.forEach(list=>{
+    const item=list.find(c=>c.type===type && c.label===oldLabel);
+    if(item) item.label=newLabel;
+  });
+  sess.events.forEach(e=>{
+    if(e.type===type && e.label===oldLabel) e.label=newLabel;
+  });
+  sess.updated=new Date().toISOString();
+  saveDB();
+  buildWorkButtons();
+  renderItemSettings();
+  renderAll();
+}
+
+function moveWorkItem(type,label,dir){
+  const list=currentSession().categories||[];
+  const indexes=list.map((c,i)=>({c,i})).filter(x=>x.c.type===type);
+  const currentPos=indexes.findIndex(x=>x.c.label===label);
+  const targetPos=currentPos+dir;
+  if(currentPos<0 || targetPos<0 || targetPos>=indexes.length) return;
+  const a=indexes[currentPos].i,b=indexes[targetPos].i;
+  [list[a],list[b]]=[list[b],list[a]];
+  currentSession().updated=new Date().toISOString();
+  saveDB();
+  buildWorkButtons();
+  renderItemSettings();
+  renderAll();
+}
+
+function setWorkItemActive(type,label,makeActive){
+  const sess=currentSession();
+  const from=makeActive?(sess.inactiveCategories||[]):(sess.categories||[]);
+  const to=makeActive?(sess.categories||[]):(sess.inactiveCategories||[]);
+  const i=from.findIndex(c=>c.type===type && c.label===label);
+  if(i<0) return;
+  const item=from.splice(i,1)[0];
+  to.push(item);
+  sess.updated=new Date().toISOString();
+  saveDB();
+  buildWorkButtons();
+  renderItemSettings();
+  renderAll();
+}
+
+function deleteWorkItem(type,label){
+  const n=itemObservationCount(type,label);
+  if(n>0){
+    alert("「"+label+"」には観測データが"+n+"件あるため削除できません。\\n過去データを残す場合は「使用終了」を使ってください。");
+    return;
+  }
+  if(!confirm("「"+label+"」を削除しますか？")) return;
+  const sess=currentSession();
+  sess.categories=(sess.categories||[]).filter(c=>!(c.type===type&&c.label===label));
+  sess.inactiveCategories=(sess.inactiveCategories||[]).filter(c=>!(c.type===type&&c.label===label));
+  sess.updated=new Date().toISOString();
+  saveDB();
+  buildWorkButtons();
+  renderItemSettings();
+  renderAll();
+}
+
+function itemSettingRow(item,isActive){
+  const row=document.createElement("div");
+  row.className="item-setting-row"+(isActive?"":" inactive");
+
+  const input=document.createElement("input");
+  input.value=item.label;
+
+  const up=document.createElement("button");
+  up.className="action move-btn";
+  up.textContent="↑";
+  up.title="上へ";
+  up.disabled=!isActive;
+  up.addEventListener("click",()=>moveWorkItem(item.type,item.label,-1));
+
+  const down=document.createElement("button");
+  down.className="action move-btn";
+  down.textContent="↓";
+  down.title="下へ";
+  down.disabled=!isActive;
+  down.addEventListener("click",()=>moveWorkItem(item.type,item.label,1));
+
+  const rename=document.createElement("button");
+  rename.className="action";
+  rename.textContent="変更";
+  rename.addEventListener("click",()=>renameWorkItem(item.type,item.label,input.value));
+
+  const state=document.createElement("button");
+  const n=itemObservationCount(item.type,item.label);
+  if(n===0){
+    state.className="action delete-master-btn item-state";
+    state.textContent="削除";
+    state.addEventListener("click",()=>deleteWorkItem(item.type,item.label));
+  }else{
+    state.className="action "+(isActive?"end-btn":"restore-btn")+" item-state";
+    state.textContent=isActive?"使用終了":"再使用";
+    state.addEventListener("click",()=>setWorkItemActive(item.type,item.label,!isActive));
+  }
+
+  row.append(input,up,down,rename,state);
+  return row;
+}
+
+function renderItemSettings(){
+  if(!els.valueItemSettings) return;
+  const sess=currentSession();
+  const maps={value:els.valueItemSettings,support:els.supportItemSettings,loss:els.lossItemSettings};
+  Object.values(maps).forEach(el=>el.innerHTML="");
+
+  ["value","support","loss"].forEach(type=>{
+    (sess.categories||[]).filter(c=>c.type===type).forEach(c=>maps[type].appendChild(itemSettingRow(c,true)));
+    (sess.inactiveCategories||[]).filter(c=>c.type===type).forEach(c=>maps[type].appendChild(itemSettingRow(c,false)));
+  });
+}
+
+function applySelectedTemplate(){
+  const key=els.templateSelect.value;
+  const tpl=WORK_TEMPLATES[key];
+  if(!tpl) return;
+  const sess=currentSession();
+
+  if(sess.events.length>0){
+    const ok=confirm(
+      "現在の測定データには観測が"+sess.events.length+"件あります。\\n\\n"+
+      "既存データを壊さないため、現在の項目は上書きしません。\\n"+
+      "新しい測定データを作成して「"+tpl.name+"」テンプレートを適用しますか？"
+    );
+    if(!ok) return;
+
+    const fresh=makeSession((sess.name||"測定")+" - "+tpl.name);
+    fresh.categories=cloneTemplate(key);
+    fresh.inactiveCategories=[];
+    fresh.templateKey=key;
+    db.sessions[fresh.id]=fresh;
+    db.currentId=fresh.id;
+    saveDB();
+    refreshSelectors();
+    buildWorkButtons();
+    renderAll();
+    switchPage("measure");
+    alert("新しい測定データを作成し、「"+tpl.name+"」テンプレートを適用しました。");
+    return;
+  }
+
+  const ok=confirm(
+    "現在の作業項目を「"+tpl.name+"」テンプレートに置き換えますか？\\n"+
+    "観測データは0件のため、測定データへの影響はありません。"
+  );
+  if(!ok) return;
+
+  sess.categories=cloneTemplate(key);
+  sess.inactiveCategories=[];
+  sess.templateKey=key;
+  sess.updated=new Date().toISOString();
+  saveDB();
+  buildWorkButtons();
+  renderItemSettings();
+  renderAll();
+}
+
 
 function drawMiniPie(canvas, stats){
   const rect = canvas.getBoundingClientRect();
@@ -1628,7 +1989,7 @@ function renderComparison(){
       grid.appendChild(cell);
     });
 
-    CATEGORIES.filter(c=>c.type===group.type).forEach(c=>{
+    analysisCategories().filter(c=>c.type===group.type).forEach(c=>{
       const label=document.createElement("div");
       label.className="compare-cell compare-label";
       label.textContent=c.label;
@@ -1730,6 +2091,13 @@ els.backupBtn.addEventListener("click", () => {
 
 els.addFactoryBtn.addEventListener("click",()=>addMaster("factory"));
 els.addWorkerBtn.addEventListener("click",()=>addMaster("worker"));
+els.applyTemplateBtn.addEventListener("click", applySelectedTemplate);
+els.addValueItemBtn.addEventListener("click",()=>addWorkItem("value"));
+els.addSupportItemBtn.addEventListener("click",()=>addWorkItem("support"));
+els.addLossItemBtn.addEventListener("click",()=>addWorkItem("loss"));
+els.newValueItem.addEventListener("keydown",e=>{if(e.key==="Enter")addWorkItem("value");});
+els.newSupportItem.addEventListener("keydown",e=>{if(e.key==="Enter")addWorkItem("support");});
+els.newLossItem.addEventListener("keydown",e=>{if(e.key==="Enter")addWorkItem("loss");});
 els.newFactoryName.addEventListener("keydown",e=>{if(e.key==="Enter")addMaster("factory");});
 els.newWorkerName.addEventListener("keydown",e=>{if(e.key==="Enter")addMaster("worker");});
 

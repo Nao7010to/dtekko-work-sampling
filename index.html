@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="電機鉄工WS">
-<title>電機鉄工 ワークサンプリング</title>
+<title>Work Sampling</title>
 <style>
 :root{
   --bg:#f4f6f9; --card:#fff; --text:#172033; --muted:#6b7280;
@@ -42,16 +42,17 @@ select,input{width:100%;min-height:36px;border:1px solid var(--border);border-ra
 .metric b{display:block;font-size:16px;margin-top:2px}
 .section-title{font-size:13px;font-weight:900;margin:0 0 6px}
 .work-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
-.work-item{display:grid;grid-template-columns:34px 1fr;gap:5px}
+.work-item{position:relative;display:block;min-height:62px}
 .minus-btn{
-  min-height:40px;border:2px solid var(--danger);background:var(--danger);color:#fff;
-  border-radius:8px;font-size:23px;font-weight:900;line-height:1
+  position:absolute;left:7px;top:50%;transform:translateY(-50%);z-index:2;
+  width:38px;height:44px;min-height:44px;border:1px solid #e1b8b8;background:#f7eaea;color:#9b4b4b;
+  border-radius:10px;font-size:24px;font-weight:800;line-height:1
 }
-.add-btn{min-height:40px;border:0;border-radius:8px;padding:4px 6px;font-size:12px;font-weight:900}
+.add-btn{width:100%;min-height:62px;border:0;border-radius:11px;padding:8px 10px 8px 52px;font-size:15px;font-weight:900;text-align:center}
 .work-item.value .add-btn{background:var(--value)}
 .work-item.support .add-btn{background:var(--support)}
 .work-item.loss .add-btn{background:var(--loss)}
-.count{display:block;color:var(--muted);font-size:10px;margin-top:2px;font-weight:700}
+.count{display:block;color:var(--muted);font-size:12px;margin-top:3px;font-weight:700}
 .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .action{min-height:36px;border:1px solid var(--border);background:#fff;border-radius:9px;padding:6px;font-size:11px;font-weight:800}
 .primary{background:#2f5bd8;color:#fff;border-color:#2f5bd8}
@@ -84,12 +85,33 @@ th:first-child,td:first-child{text-align:left}
   .work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .actions{grid-template-columns:repeat(2,1fr)}
 }
+
+.app-title{font-size:13px;letter-spacing:.12em;color:#687387;font-weight:800}
+#page-summary .summary-hero{
+  background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+  border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:10px;
+  box-shadow:0 8px 28px rgba(23,32,51,.06)
+}
+#page-summary .hero-kicker{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.08em;margin-bottom:4px}
+#page-summary .hero-title{font-size:23px;font-weight:900;margin:0 0 14px}
+#page-summary .hero-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+#page-summary .hero-metric{background:#fff;border:1px solid var(--border);border-radius:12px;padding:9px;text-align:center}
+#page-summary .hero-metric span{display:block;font-size:10px;color:var(--muted);font-weight:700}
+#page-summary .hero-metric b{display:block;font-size:22px;margin-top:2px}
+#page-summary .hero-chart{height:360px;background:#fff;border:1px solid var(--border);border-radius:15px;padding:8px}
+#page-summary .detail-heading{font-size:13px;font-weight:900;margin:18px 2px 8px;color:#4b5563}
+#page-summary .scroll-hint{text-align:center;color:#8a94a5;font-size:10px;margin:8px 0 2px}
+@media(max-width:700px){
+ #page-summary .hero-metrics{grid-template-columns:repeat(2,1fr)}
+ #page-summary .hero-chart{height:320px}
+}
+
 </style>
 </head>
 <body>
 <header>
   <div class="header-row">
-    <h1>電機鉄工 WS</h1>
+    <h1 class="app-title">WORK SAMPLING</h1>
     <div class="session-label" id="sessionLabel">測定データ</div>
   </div>
   <div class="tabs">
@@ -164,6 +186,23 @@ th:first-child,td:first-child{text-align:left}
 </section>
 
 <section class="page" id="page-summary">
+  <div class="summary-hero">
+    <div class="hero-kicker">WORK SAMPLING RESULT</div>
+    <h2 class="hero-title">作業構成サマリー</h2>
+
+    <div class="hero-metrics">
+      <div class="hero-metric"><span>観測数</span><b id="sTotal">0</b></div>
+      <div class="hero-metric"><span>価値作業</span><b id="sValue">0%</b></div>
+      <div class="hero-metric"><span>付帯作業</span><b id="sSupport">0%</b></div>
+      <div class="hero-metric"><span>ロス作業</span><b id="sLoss">0%</b></div>
+    </div>
+
+    <div class="hero-chart"><canvas id="pieChart"></canvas></div>
+    <div class="scroll-hint">↓ スクロールすると詳細分析を確認できます</div>
+  </div>
+
+  <div class="detail-heading">詳細分析</div>
+
   <div class="card">
     <div class="section-title">集計条件</div>
     <div class="filters">
@@ -174,31 +213,22 @@ th:first-child,td:first-child{text-align:left}
 
   <div class="card">
     <div class="metrics">
-      <div class="metric">観測数<b id="sTotal">0</b></div>
-      <div class="metric">価値作業<b id="sValue">0%</b></div>
-      <div class="metric">付帯作業<b id="sSupport">0%</b></div>
-      <div class="metric">ロス作業<b id="sLoss">0%</b></div>
       <div class="metric">平均R<b id="sRating">-</b></div>
       <div class="metric">対象<b id="sTarget">全体</b></div>
+      <div class="metric">観測数<b id="sTotalDetail">0</b></div>
+      <div class="metric">価値作業<b id="sValueDetail">0%</b></div>
+      <div class="metric">付帯作業<b id="sSupportDetail">0%</b></div>
+      <div class="metric">ロス作業<b id="sLossDetail">0%</b></div>
     </div>
   </div>
 
-  <div class="summary-layout">
-    <div class="card chart-card">
-      <div class="section-title">ワークサンプリング構成比</div>
-      <div class="chart-box"><canvas id="pieChart"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">ワークサンプリング集計表</div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>分類</th><th>打点数</th><th>構成比</th></tr>
-          </thead>
-          <tbody id="summaryTable"></tbody>
-        </table>
-      </div>
+  <div class="card">
+    <div class="section-title">ワークサンプリング集計表</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>分類</th><th>打点数</th><th>構成比</th></tr></thead>
+        <tbody id="summaryTable"></tbody>
+      </table>
     </div>
   </div>
 
@@ -298,6 +328,10 @@ const els = {
   sLoss: document.getElementById("sLoss"),
   sRating: document.getElementById("sRating"),
   sTarget: document.getElementById("sTarget"),
+  sTotalDetail: document.getElementById("sTotalDetail"),
+  sValueDetail: document.getElementById("sValueDetail"),
+  sSupportDetail: document.getElementById("sSupportDetail"),
+  sLossDetail: document.getElementById("sLossDetail"),
   pieChart: document.getElementById("pieChart"),
   summaryTable: document.getElementById("summaryTable"),
   history: document.getElementById("history"),
@@ -582,6 +616,10 @@ function renderSummary(){
   els.sLoss.textContent = pct(s.loss,s.total) + "%";
   els.sRating.textContent = avgRating(s);
   els.sTarget.textContent = (f === "ALL" ? "全工場" : f) + " / " + (w === "ALL" ? "全作業者" : "作業者"+w);
+  els.sTotalDetail.textContent = s.total;
+  els.sValueDetail.textContent = pct(s.value,s.total) + "%";
+  els.sSupportDetail.textContent = pct(s.support,s.total) + "%";
+  els.sLossDetail.textContent = pct(s.loss,s.total) + "%";
 
   renderSummaryTable(s);
   renderHistory(events);

@@ -106,6 +106,22 @@ th:first-child,td:first-child{text-align:left}
  #page-summary .hero-chart{height:320px}
 }
 
+
+/* V8: customer-facing summary readability */
+#page-summary .hero-kicker{font-size:16px!important}
+#page-summary .hero-title{font-size:34px!important;line-height:1.2;margin-bottom:20px!important}
+#page-summary .hero-metric{padding:14px 10px!important}
+#page-summary .hero-metric span{font-size:16px!important}
+#page-summary .hero-metric b{font-size:34px!important;line-height:1.15;margin-top:6px!important}
+#page-summary .hero-chart{height:410px!important}
+#page-summary .scroll-hint{font-size:13px!important;margin-top:12px!important}
+@media(max-width:700px){
+  #page-summary .hero-title{font-size:30px!important}
+  #page-summary .hero-metric span{font-size:15px!important}
+  #page-summary .hero-metric b{font-size:31px!important}
+  #page-summary .hero-chart{height:380px!important}
+}
+
 </style>
 </head>
 <body>
@@ -285,12 +301,12 @@ const CATEGORIES = [
   {type:"value",label:"切断・加工"},
   {type:"value",label:"溶接"},
   {type:"value",label:"組立・仮付け"},
-  {type:"value",label:"仕上げ"},
+  {type:"value",label:"仕上げ"},{type:"value",label:"その他"},
   {type:"support",label:"段取り"},
   {type:"support",label:"図面確認"},
   {type:"support",label:"測定・検査"},
   {type:"support",label:"材料・製品運搬"},
-  {type:"support",label:"クレーン操作・反転"},
+  {type:"support",label:"クレーン操作・反転"},{type:"support",label:"その他"},
   {type:"loss",label:"歩行"},
   {type:"loss",label:"材料・工具探し"},
   {type:"loss",label:"待ち"},

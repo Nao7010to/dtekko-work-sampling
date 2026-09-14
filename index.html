@@ -12,217 +12,425 @@
 <title>電機鉄工 ワークサンプリング</title>
 <style>
 :root{
-  --bg:#f5f7fb; --card:#fff; --text:#182230; --muted:#687387;
-  --accent:#2457d6; --border:#dfe5ee; --good:#e8f6ec; --warn:#fff4d6; --bad:#fde8e8;
+ --bg:#f5f7fb;--card:#fff;--text:#182230;--muted:#687387;--accent:#2457d6;
+ --border:#dfe5ee;--value:#e8f6ec;--support:#fff4d6;--loss:#fde8e8;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif}
-body{padding-bottom:env(safe-area-inset-bottom)}
-header{position:sticky;top:0;z-index:5;background:rgba(245,247,251,.96);backdrop-filter:blur(8px);padding:12px;border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top))}
-h1{font-size:20px;margin:0 0 10px}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-select,button{font:inherit}
-select{padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;font-weight:700;min-height:44px}
-.wrap{padding:12px;max-width:1100px;margin:auto}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(22,34,51,.04)}
-.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.metric{padding:12px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);text-align:center}
-.metric b{display:block;font-size:24px;margin-top:4px}
-.section-title{font-size:15px;font-weight:800;margin:0 0 10px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.workbtn{min-height:82px;border:0;border-radius:16px;padding:10px;font-weight:800;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.05);touch-action:manipulation}
-.workbtn:active{transform:scale(.98)}
-.value{background:var(--good)}
-.support{background:var(--warn)}
-.loss{background:var(--bad)}
-.count{display:block;font-size:12px;color:var(--muted);margin-top:5px}
-.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.action{border:1px solid var(--border);background:#fff;border-radius:12px;padding:12px;font-weight:800;min-height:48px}
-.primary{background:var(--accent);color:white;border-color:var(--accent)}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:9px 7px;border-bottom:1px solid var(--border);text-align:right}
+body{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+button,select,input{font:inherit}
+header{position:sticky;top:0;z-index:10;background:rgba(245,247,251,.97);backdrop-filter:blur(9px);border-bottom:1px solid var(--border);padding:8px 10px;padding-top:calc(8px + env(safe-area-inset-top))}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:17px;margin:0}
+.sessionname{font-size:11px;color:var(--muted);max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}
+.tab{border:1px solid var(--border);background:white;border-radius:9px;padding:7px 4px;font-weight:800;font-size:12px}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.wrap{padding:8px;max-width:1050px;margin:auto}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px;margin-bottom:8px;box-shadow:0 2px 8px rgba(22,34,51,.035)}
+.compact-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+select,input{width:100%;min-height:34px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:5px 7px;font-weight:700;font-size:12px}
+.section-title{font-size:13px;font-weight:900;margin:0 0 6px}
+.category-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.workbox{border-radius:9px;padding:4px;min-height:53px;display:flex;flex-direction:column;gap:3px}
+.workbox.value{background:var(--value)}.workbox.support{background:var(--support)}.workbox.loss{background:var(--loss)}
+.addbtn{border:0;background:transparent;min-height:30px;font-size:12px;font-weight:900;padding:2px;line-height:1.15}
+.count{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.minusbtn{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.72);border-radius:7px;min-height:22px;padding:1px;font-size:11px;font-weight:900}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.metric{background:#f8fafc;border:1px solid var(--border);border-radius:9px;text-align:center;padding:6px 3px;font-size:10px}
+.metric b{display:block;font-size:16px;margin-top:2px}
+.next{grid-column:span 2}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.action{border:1px solid var(--border);background:white;border-radius:8px;padding:7px 4px;font-weight:800;font-size:11px;min-height:34px}
+.primary{background:var(--accent);border-color:var(--accent);color:white}
+.danger{color:#b42318}
+.small{font-size:10px;color:var(--muted);margin:5px 0 0}
+.filter-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.chart-wrap{height:230px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:6px}
+canvas{width:100%;height:100%}
+.table-wrap{overflow:auto;max-height:250px}
+table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+th,td{padding:6px;border-bottom:1px solid var(--border);text-align:right}
 th:first-child,td:first-child{text-align:left}
-.bar{height:12px;border-radius:999px;background:#eef2f7;overflow:hidden}
-.fill{height:100%;background:var(--accent);width:0%}
-.small{font-size:12px;color:var(--muted)}
-.history{max-height:260px;overflow:auto}
-.history-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
-.notice{padding:10px 12px;border-radius:12px;background:#eef4ff;border:1px solid #cfdcff;font-size:13px;margin-bottom:12px}
-@media(max-width:700px){
- .meta{grid-template-columns:repeat(2,1fr)}
- .grid{grid-template-columns:repeat(2,1fr)}
+.history{max-height:210px;overflow:auto}
+.history-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:5px 1px;border-bottom:1px solid var(--border);font-size:11px}
+.badge{display:inline-block;padding:2px 5px;border-radius:999px;font-size:9px;background:#eef2f7;color:var(--muted)}
+.session-list{display:grid;gap:6px}
+.session-item{display:grid;grid-template-columns:1fr auto auto;gap:5px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:7px}
+.session-item strong{font-size:12px}.session-item span{font-size:10px;color:var(--muted)}
+.inline-edit{display:grid;grid-template-columns:1fr auto;gap:5px;margin-bottom:5px}
+.notice{font-size:10px;color:var(--muted)}
+@media(max-width:800px){
+ .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .compact-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .metrics{grid-template-columns:repeat(3,1fr)}
+ .next{grid-column:span 1}
+}
+@media(max-width:520px){
+ .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .compact-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .filter-row{grid-template-columns:1fr 1fr}
+ .metrics{grid-template-columns:repeat(3,1fr)}
  .actions{grid-template-columns:repeat(2,1fr)}
- .workbtn{min-height:88px;font-size:17px}
 }
 </style>
 </head>
 <body>
 <header>
-  <h1>電機鉄工 ワークサンプリング</h1>
-  <div class="row">
-    <select id="worker"></select>
-    <select id="rating">
-      <option value="50">R 50</option>
-      <option value="80">R 80</option>
-      <option value="100" selected>R 100</option>
-      <option value="120">R 120</option>
-    </select>
-    <select id="mode">
-      <option value="manual">手動観測</option>
-      <option value="fixed">固定間隔</option>
-      <option value="random" selected>ランダム間隔</option>
-    </select>
-    <select id="interval">
-      <option value="60">1分</option>
-      <option value="120">2分</option>
-      <option value="300" selected>5分</option>
-      <option value="600">10分</option>
-    </select>
-    <select id="randomRange">
-      <option value="180,480">3〜8分</option>
-      <option value="300,600" selected>5〜10分</option>
-      <option value="300,900">5〜15分</option>
-      <option value="600,1200">10〜20分</option>
-    </select>
-  </div>
+ <div class="topline">
+   <h1>電機鉄工 WS</h1>
+   <div class="sessionname" id="currentSessionLabel">測定データ</div>
+ </div>
+ <div class="tabs">
+   <button class="tab active" data-page="measure">測定</button>
+   <button class="tab" data-page="summary">集計・グラフ</button>
+   <button class="tab" data-page="data">データ管理</button>
+ </div>
 </header>
 
 <div class="wrap">
-  <div class="notice">ホーム画面に追加すると、iPadでアプリのように使えます。データは端末内に自動保存されます。</div>
+<section class="page active" id="page-measure">
+ <div class="card">
+   <div class="compact-row">
+     <select id="factory"></select>
+     <select id="worker"></select>
+     <select id="rating">
+       <option value="50">R 50</option><option value="80">R 80</option>
+       <option value="100" selected>R 100</option><option value="120">R 120</option>
+     </select>
+     <select id="mode">
+       <option value="manual">手動</option><option value="fixed">固定</option><option value="random" selected>ランダム</option>
+     </select>
+     <select id="timing">
+       <option value="180,480">3〜8分</option><option value="300,600" selected>5〜10分</option>
+       <option value="300,900">5〜15分</option><option value="600,1200">10〜20分</option>
+     </select>
+   </div>
+ </div>
 
-  <div class="card">
-    <div class="meta">
-      <div class="metric">総観測数<b id="total">0</b></div>
-      <div class="metric">価値作業<b id="valuePct">0%</b></div>
-      <div class="metric">付随作業<b id="supportPct">0%</b></div>
-      <div class="metric">ロス<b id="lossPct">0%</b></div>
-      <div class="metric">平均R<b id="avgRating">100</b></div>
-      <div class="metric" style="grid-column:span 3">次回観測<b id="nextObs">手動</b></div>
-    </div>
-  </div>
+ <div class="card">
+   <div class="metrics">
+     <div class="metric">観測数<b id="mTotal">0</b></div>
+     <div class="metric">価値<b id="mValue">0%</b></div>
+     <div class="metric">付随<b id="mSupport">0%</b></div>
+     <div class="metric">ロス<b id="mLoss">0%</b></div>
+     <div class="metric">平均R<b id="mRating">-</b></div>
+     <div class="metric next">次回<b id="nextObs">手動</b></div>
+   </div>
+ </div>
 
-  <div class="card"><div class="section-title">価値作業</div><div class="grid" id="valueGrid"></div></div>
-  <div class="card"><div class="section-title">付随作業</div><div class="grid" id="supportGrid"></div></div>
-  <div class="card"><div class="section-title">ロス</div><div class="grid" id="lossGrid"></div></div>
+ <div class="card"><div class="section-title">価値作業</div><div class="grid" id="valueGrid"></div></div>
+ <div class="card"><div class="section-title">付随作業</div><div class="grid" id="supportGrid"></div></div>
+ <div class="card"><div class="section-title">ロス</div><div class="grid" id="lossGrid"></div></div>
 
-  <div class="card">
-    <div class="actions">
-      <button class="action" id="undo">↩ 1回取消</button>
-      <button class="action" id="resetWorker">作業者のみリセット</button>
-      <button class="action" id="csv">CSV出力</button>
-      <button class="action primary" id="save">今すぐ保存</button>
-    </div>
-    <p class="small">レーティング目安：50=かなり遅い / 80=やや遅い / 100=標準 / 120=速い</p>
-  </div>
+ <div class="card">
+   <div class="actions">
+     <button class="action" id="undo">↩ 直前取消</button>
+     <button class="action primary" id="quickSave">保存</button>
+     <button class="action" id="goSummary">集計を見る</button>
+     <button class="action" id="csvCurrent">CSV</button>
+   </div>
+   <p class="small">「−1」は、現在選択中の工場・作業者について、その作業項目の直近1件だけ削除します。</p>
+ </div>
+</section>
 
-  <div class="card">
-    <div class="section-title">作業者別集計</div>
+<section class="page" id="page-summary">
+ <div class="card">
+   <div class="section-title">集計条件</div>
+   <div class="filter-row">
+     <select id="filterFactory"></select>
+     <select id="filterWorker"></select>
+     <select id="chartMode">
+       <option value="type">価値・付随・ロス</option>
+       <option value="item">作業項目別</option>
+       <option value="worker">作業者別</option>
+     </select>
+   </div>
+ </div>
+
+ <div class="card">
+   <div class="metrics">
+     <div class="metric">観測数<b id="sTotal">0</b></div>
+     <div class="metric">価値<b id="sValue">0%</b></div>
+     <div class="metric">付随<b id="sSupport">0%</b></div>
+     <div class="metric">ロス<b id="sLoss">0%</b></div>
+     <div class="metric">平均R<b id="sRating">-</b></div>
+     <div class="metric">対象<b id="sTarget">全体</b></div>
+   </div>
+ </div>
+
+ <div class="card">
+   <div class="section-title">グラフ</div>
+   <div class="chart-wrap"><canvas id="chart"></canvas></div>
+ </div>
+
+ <div class="card">
+   <div class="section-title">作業者別一覧</div>
+   <div class="table-wrap">
     <table>
-      <thead><tr><th>作業者</th><th>観測数</th><th>価値</th><th>付随</th><th>ロス</th><th>平均R</th></tr></thead>
-      <tbody id="workerTable"></tbody>
+      <thead><tr><th>工場</th><th>作業者</th><th>観測</th><th>価値</th><th>付随</th><th>ロス</th><th>平均R</th></tr></thead>
+      <tbody id="summaryTable"></tbody>
     </table>
-  </div>
+   </div>
+ </div>
 
-  <div class="card">
-    <div class="section-title">全体比率</div>
-    <div style="display:grid;gap:10px">
-      <div><div class="row" style="justify-content:space-between"><b>価値作業</b><span id="vLabel">0%</span></div><div class="bar"><div class="fill" id="vBar"></div></div></div>
-      <div><div class="row" style="justify-content:space-between"><b>付随作業</b><span id="sLabel">0%</span></div><div class="bar"><div class="fill" id="sBar"></div></div></div>
-      <div><div class="row" style="justify-content:space-between"><b>ロス</b><span id="lLabel">0%</span></div><div class="bar"><div class="fill" id="lBar"></div></div></div>
-    </div>
-  </div>
+ <div class="card">
+   <div class="section-title">直近の観測</div>
+   <div class="history" id="history"></div>
+ </div>
+</section>
 
-  <div class="card">
-    <div class="section-title">直近の観測</div>
-    <div class="history" id="history"></div>
-  </div>
+<section class="page" id="page-data">
+ <div class="card">
+   <div class="section-title">新規測定</div>
+   <div class="inline-edit">
+     <input id="newSessionName" placeholder="例：2026-09-14 電機鉄工 診断1日目">
+     <button class="action primary" id="newSession">新規作成</button>
+   </div>
+   <p class="notice">新規作成すると別データとして保存され、過去データは残ります。</p>
+ </div>
+
+ <div class="card">
+   <div class="section-title">現在のデータ</div>
+   <div class="inline-edit">
+     <input id="renameSession" placeholder="データ名">
+     <button class="action" id="renameBtn">名称変更</button>
+   </div>
+   <div class="actions">
+     <button class="action primary" id="saveSession">保存</button>
+     <button class="action" id="csvSession">CSV出力</button>
+     <button class="action danger" id="clearCurrent">現在データ消去</button>
+     <button class="action" id="exportBackup">バックアップ</button>
+   </div>
+ </div>
+
+ <div class="card">
+   <div class="section-title">工場名設定</div>
+   <div class="inline-edit"><input id="factoryName0"><button class="action factorySave" data-i="0">変更</button></div>
+   <div class="inline-edit"><input id="factoryName1"><button class="action factorySave" data-i="1">変更</button></div>
+   <div class="inline-edit"><input id="factoryName2"><button class="action factorySave" data-i="2">変更</button></div>
+ </div>
+
+ <div class="card">
+   <div class="section-title">保存済みデータ</div>
+   <div class="session-list" id="sessionList"></div>
+ </div>
+</section>
 </div>
 
 <script>
-const workers=["作業者A","作業者B","作業者C","作業者D","作業者E","作業者F"];
-const categories=[
+const DEFAULT_FACTORIES=["工場A","工場B","工場C"];
+const WORKERS=["A","B","C","D","E","F"];
+const CATEGORIES=[
  {type:"value",label:"切断・加工"},{type:"value",label:"溶接"},{type:"value",label:"組立・仮付け"},{type:"value",label:"仕上げ"},
  {type:"support",label:"段取り"},{type:"support",label:"図面確認"},{type:"support",label:"測定・検査"},{type:"support",label:"材料・製品運搬"},{type:"support",label:"クレーン操作・反転"},
  {type:"loss",label:"歩行"},{type:"loss",label:"材料・工具探し"},{type:"loss",label:"待ち"},{type:"loss",label:"手直し"},{type:"loss",label:"打合せ・指示確認"},{type:"loss",label:"その他"}
 ];
+const STORE="dtekko_ws_v3";
+let db={factories:[...DEFAULT_FACTORIES],currentId:null,sessions:{}};
+let timer=null;
 
-let data={events:[]};
-let timer=null, nextTimeout=null;
-const workerSel=document.getElementById("worker");
-workers.forEach(w=>{const o=document.createElement("option");o.value=w;o.textContent=w;workerSel.appendChild(o)});
+function id(){return "s_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)}
+function nowName(){return new Date().toLocaleDateString("ja-JP")+" 測定"}
+function blankSession(name){return {id:id(),name:name||nowName(),created:new Date().toISOString(),updated:new Date().toISOString(),events:[]}}
+function saveDB(){localStorage.setItem(STORE,JSON.stringify(db))}
+function current(){return db.sessions[db.currentId]}
+function ensureDB(){
+ try{const raw=localStorage.getItem(STORE);if(raw)db=JSON.parse(raw)}catch(e){}
+ if(!db.factories||db.factories.length<3)db.factories=[...DEFAULT_FACTORIES];
+ if(!db.sessions||Object.keys(db.sessions).length===0){
+   const s=blankSession();
+   db.sessions[s.id]=s;db.currentId=s.id;
+   // migrate old app data if present
+   try{
+     const old=JSON.parse(localStorage.getItem("dtekko_ws_pwa")||"null");
+     if(old&&Array.isArray(old.events)&&old.events.length){
+       s.name="旧データ移行";
+       s.events=old.events.map(e=>({...e,factory:db.factories[0],worker:(e.worker||"作業者A").replace("作業者","")}));
+     }
+   }catch(e){}
+ }
+ if(!db.currentId||!db.sessions[db.currentId])db.currentId=Object.keys(db.sessions)[0];
+ saveDB();
+}
 
-function saveLocal(){localStorage.setItem("dtekko_ws_pwa",JSON.stringify(data))}
-function countsFor(worker=null){
- const ev=worker?data.events.filter(e=>e.worker===worker):data.events;
- const out={total:ev.length,value:0,support:0,loss:0,items:{},ratingSum:0,ratingCount:0};
- categories.forEach(c=>out.items[c.label]=0);
- ev.forEach(e=>{
-  out[e.type]=(out[e.type]||0)+1;
-  out.items[e.label]=(out.items[e.label]||0)+1;
-  if(e.rating!=null){out.ratingSum+=Number(e.rating);out.ratingCount++}
- });
- return out;
+function setOptions(sel,items,all=false){
+ sel.innerHTML="";
+ if(all){const o=document.createElement("option");o.value="ALL";o.textContent="全体";sel.appendChild(o)}
+ items.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;sel.appendChild(o)})
+}
+function refreshSelectors(){
+ const fv=factory.value,wv=worker.value,ff=filterFactory.value,fw=filterWorker.value;
+ setOptions(factory,db.factories);setOptions(worker,WORKERS.map(x=>"作業者"+x));
+ setOptions(filterFactory,db.factories,true);setOptions(filterWorker,WORKERS.map(x=>"作業者"+x),true);
+ if(db.factories.includes(fv))factory.value=fv;
+ if(WORKERS.map(x=>"作業者"+x).includes(wv))worker.value=wv;
+ if(["ALL",...db.factories].includes(ff))filterFactory.value=ff;
+ if(["ALL",...WORKERS.map(x=>"作業者"+x)].includes(fw))filterWorker.value=fw;
+ db.factories.forEach((n,i)=>document.getElementById("factoryName"+i).value=n);
+}
+
+function filtered(factoryVal="ALL",workerVal="ALL"){
+ return current().events.filter(e=>(factoryVal==="ALL"||e.factory===factoryVal)&&(workerVal==="ALL"||e.worker===workerVal.replace("作業者","")));
+}
+function stats(events){
+ const o={total:events.length,value:0,support:0,loss:0,rSum:0,rCount:0,items:{}};
+ CATEGORIES.forEach(c=>o.items[c.label]=0);
+ events.forEach(e=>{o[e.type]=(o[e.type]||0)+1;o.items[e.label]=(o.items[e.label]||0)+1;if(e.rating!=null){o.rSum+=+e.rating;o.rCount++}});
+ return o;
 }
 function pct(n,d){return d?Math.round(n/d*100):0}
+function avgR(s){return s.rCount?Math.round(s.rSum/s.rCount):"-"}
 
 function renderButtons(){
  ["value","support","loss"].forEach(type=>{
-  const grid=document.getElementById(type+"Grid");grid.innerHTML="";
-  categories.filter(c=>c.type===type).forEach(c=>{
-   const b=document.createElement("button");b.className="workbtn "+type;
-   b.innerHTML=`${c.label}<span class="count" id="cnt-${CSS.escape(c.label)}">0回</span>`;
-   b.onclick=()=>addEvent(c);grid.appendChild(b);
+  const g=document.getElementById(type+"Grid");g.innerHTML="";
+  CATEGORIES.filter(c=>c.type===type).forEach(c=>{
+   const box=document.createElement("div");box.className="workbox "+type;
+   const add=document.createElement("button");add.className="addbtn";
+   add.innerHTML=`${c.label}<span class="count" id="cnt-${CSS.escape(c.label)}">0</span>`;
+   add.onclick=()=>addEvent(c);
+   const minus=document.createElement("button");minus.className="minusbtn";minus.textContent="−1";minus.onclick=()=>removeMatching(c);
+   box.append(add,minus);g.appendChild(box);
   });
  });
 }
 function addEvent(c){
- data.events.push({ts:new Date().toISOString(),worker:workerSel.value,type:c.type,label:c.label,rating:Number(document.getElementById("rating").value)});
- saveLocal(); if(navigator.vibrate) navigator.vibrate(20); render();
+ current().events.push({ts:new Date().toISOString(),factory:factory.value,worker:worker.value.replace("作業者",""),type:c.type,label:c.label,rating:+rating.value});
+ current().updated=new Date().toISOString();saveDB();renderAll();
 }
-function render(){
- const all=countsFor();
- total.textContent=all.total; valuePct.textContent=pct(all.value,all.total)+"%"; supportPct.textContent=pct(all.support,all.total)+"%"; lossPct.textContent=pct(all.loss,all.total)+"%";
- avgRating.textContent=all.ratingCount?Math.round(all.ratingSum/all.ratingCount):100;
- const vp=pct(all.value,all.total),sp=pct(all.support,all.total),lp=pct(all.loss,all.total);
- [["v",vp],["s",sp],["l",lp]].forEach(([k,p])=>{document.getElementById(k+"Label").textContent=p+"%";document.getElementById(k+"Bar").style.width=p+"%"});
- categories.forEach(c=>{const el=document.getElementById("cnt-"+CSS.escape(c.label));if(el)el.textContent=(all.items[c.label]||0)+"回"});
- workerTable.innerHTML="";
- workers.forEach(w=>{const c=countsFor(w),tr=document.createElement("tr"),avgR=c.ratingCount?Math.round(c.ratingSum/c.ratingCount):"-";tr.innerHTML=`<td>${w}</td><td>${c.total}</td><td>${pct(c.value,c.total)}%</td><td>${pct(c.support,c.total)}%</td><td>${pct(c.loss,c.total)}%</td><td>${avgR}</td>`;workerTable.appendChild(tr)});
+function removeMatching(c){
+ const ev=current().events;const f=factory.value,w=worker.value.replace("作業者","");
+ for(let i=ev.length-1;i>=0;i--){
+  if(ev[i].factory===f&&ev[i].worker===w&&ev[i].label===c.label){ev.splice(i,1);saveDB();renderAll();return}
+ }
+ alert(`${f}・作業者${w} の「${c.label}」はありません`);
+}
+
+function renderMeasure(){
+ const ev=filtered(factory.value,worker.value),s=stats(ev);
+ mTotal.textContent=s.total;mValue.textContent=pct(s.value,s.total)+"%";mSupport.textContent=pct(s.support,s.total)+"%";mLoss.textContent=pct(s.loss,s.total)+"%";mRating.textContent=avgR(s);
+ CATEGORIES.forEach(c=>{const el=document.getElementById("cnt-"+CSS.escape(c.label));if(el)el.textContent=(s.items[c.label]||0)+"回"});
+ currentSessionLabel.textContent=current().name;
+}
+function renderSummary(){
+ const ff=filterFactory.value||"ALL",fw=filterWorker.value||"ALL",ev=filtered(ff,fw),s=stats(ev);
+ sTotal.textContent=s.total;sValue.textContent=pct(s.value,s.total)+"%";sSupport.textContent=pct(s.support,s.total)+"%";sLoss.textContent=pct(s.loss,s.total)+"%";sRating.textContent=avgR(s);
+ sTarget.textContent=(ff==="ALL"?"全工場":ff)+" / "+(fw==="ALL"?"全作業者":fw);
+ summaryTable.innerHTML="";
+ db.factories.forEach(f=>WORKERS.forEach(w=>{
+   const e=current().events.filter(x=>x.factory===f&&x.worker===w);
+   if(!e.length)return;
+   const st=stats(e),tr=document.createElement("tr");
+   tr.innerHTML=`<td>${f}</td><td>${w}</td><td>${st.total}</td><td>${pct(st.value,st.total)}%</td><td>${pct(st.support,st.total)}%</td><td>${pct(st.loss,st.total)}%</td><td>${avgR(st)}</td>`;
+   summaryTable.appendChild(tr);
+ }));
  history.innerHTML="";
- data.events.slice(-30).reverse().forEach(e=>{const d=new Date(e.ts),div=document.createElement("div");div.className="history-item";div.innerHTML=`<span><b>${e.worker}</b>　${e.label}　R:${e.rating??"-"}</span><span class="small">${d.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>`;history.appendChild(div)});
+ ev.slice(-40).reverse().forEach(e=>{
+   const d=new Date(e.ts),div=document.createElement("div");div.className="history-item";
+   div.innerHTML=`<span><b>${e.factory} / ${e.worker}</b>　${e.label} <span class="badge">R${e.rating}</span></span><span>${d.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span>`;
+   history.appendChild(div);
+ });
+ drawChart(ev);
 }
-undo.onclick=()=>{if(data.events.length){data.events.pop();saveLocal();render()}};
-resetWorker.onclick=()=>{const w=workerSel.value;if(confirm(`${w} のデータだけリセットしますか？`)){data.events=data.events.filter(e=>e.worker!==w);saveLocal();render()}};
-save.onclick=()=>{saveLocal();alert("保存しました")};
-csv.onclick=()=>{
- const rows=[["日時","作業者","分類","作業項目","作業レーティング"]];
- data.events.forEach(e=>rows.push([new Date(e.ts).toLocaleString("ja-JP"),e.worker,e.type,e.label,e.rating??""]));
- const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+function drawChart(events){
+ const canvas=chart,ctx=canvas.getContext("2d"),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+ canvas.width=Math.max(300,rect.width*dpr);canvas.height=Math.max(180,rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+ const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);ctx.font="11px -apple-system,sans-serif";ctx.fillStyle="#182230";
+ let labels=[],vals=[];
+ if(chartMode.value==="type"){
+   const s=stats(events);labels=["価値","付随","ロス"];vals=[s.value,s.support,s.loss];
+ }else if(chartMode.value==="item"){
+   const s=stats(events);labels=CATEGORIES.map(c=>c.label);vals=labels.map(l=>s.items[l]||0);
+ }else{
+   labels=WORKERS.map(w=>"作業者"+w);vals=WORKERS.map(w=>events.filter(e=>e.worker===w).length);
+ }
+ const max=Math.max(1,...vals),left=90,right=20,top=10,bottom=10,row=(H-top-bottom)/Math.max(1,labels.length);
+ labels.forEach((lab,i)=>{
+   const y=top+i*row+row*.15,h=row*.6,w=(W-left-right)*(vals[i]/max);
+   ctx.fillStyle="#687387";ctx.textAlign="right";ctx.textBaseline="middle";
+   const shown=lab.length>9?lab.slice(0,8)+"…":lab;ctx.fillText(shown,left-6,y+h/2);
+   ctx.fillStyle="#e8edf5";ctx.fillRect(left,y,W-left-right,h);
+   ctx.fillStyle="#2457d6";ctx.fillRect(left,y,w,h);
+   ctx.fillStyle="#182230";ctx.textAlign="left";ctx.fillText(String(vals[i]),Math.min(W-right-18,left+w+5),y+h/2);
+ });
+}
+
+function renderSessions(){
+ sessionList.innerHTML="";
+ Object.values(db.sessions).sort((a,b)=>new Date(b.updated)-new Date(a.updated)).forEach(s=>{
+   const div=document.createElement("div");div.className="session-item";
+   const meta=document.createElement("div");meta.innerHTML=`<strong>${s.name}</strong><br><span>${s.events.length}件 / ${new Date(s.updated).toLocaleString("ja-JP")}</span>`;
+   const open=document.createElement("button");open.className="action";open.textContent=s.id===db.currentId?"使用中":"開く";open.disabled=s.id===db.currentId;
+   open.onclick=()=>{db.currentId=s.id;saveDB();renameSession.value=current().name;renderAll();switchPage("measure")};
+   const del=document.createElement("button");del.className="action danger";del.textContent="削除";
+   del.onclick=()=>{if(Object.keys(db.sessions).length<=1)return alert("最低1件は残してください");if(confirm(`「${s.name}」を削除しますか？`)){delete db.sessions[s.id];if(db.currentId===s.id)db.currentId=Object.keys(db.sessions)[0];saveDB();renderAll()}};
+   div.append(meta,open,del);sessionList.appendChild(div);
+ });
+ renameSession.value=current().name;
+}
+function renderAll(){renderMeasure();renderSummary();renderSessions()}
+
+function switchPage(name){
+ document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
+ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===name));
+ if(name==="summary")setTimeout(renderSummary,20);
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchPage(t.dataset.page));
+goSummary.onclick=()=>switchPage("summary");
+
+undo.onclick=()=>{if(current().events.length){current().events.pop();saveDB();renderAll()}};
+quickSave.onclick=saveSession.onclick=()=>{current().updated=new Date().toISOString();saveDB();renderAll();alert("保存しました")};
+
+function exportCSV(){
+ const rows=[["データ名","日時","工場","作業者","分類","作業項目","作業レーティング"]];
+ current().events.forEach(e=>rows.push([current().name,new Date(e.ts).toLocaleString("ja-JP"),e.factory,"作業者"+e.worker,e.type,e.label,e.rating]));
+ const csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");
  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download="電機鉄工_ワークサンプリング.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ a.href=url;a.download=current().name.replace(/[\\/:*?"<>|]/g,"_")+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+csvCurrent.onclick=csvSession.onclick=exportCSV;
+
+newSession.onclick=()=>{
+ const name=newSessionName.value.trim()||nowName(),s=blankSession(name);db.sessions[s.id]=s;db.currentId=s.id;newSessionName.value="";saveDB();renderAll();switchPage("measure");
 };
+renameBtn.onclick=()=>{const n=renameSession.value.trim();if(n){current().name=n;current().updated=new Date().toISOString();saveDB();renderAll()}};
+clearCurrent.onclick=()=>{if(confirm("現在の測定データをすべて消去しますか？")){current().events=[];current().updated=new Date().toISOString();saveDB();renderAll()}};
+exportBackup.onclick=()=>{
+ const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="電機鉄工_WS_バックアップ.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+document.querySelectorAll(".factorySave").forEach(b=>b.onclick=()=>{
+ const i=+b.dataset.i,n=document.getElementById("factoryName"+i).value.trim();if(!n)return;
+ const old=db.factories[i];db.factories[i]=n;
+ Object.values(db.sessions).forEach(s=>s.events.forEach(e=>{if(e.factory===old)e.factory=n}));
+ saveDB();refreshSelectors();renderAll();
+});
 
-function clearTiming(){if(timer)clearInterval(timer);if(nextTimeout)clearTimeout(nextTimeout);timer=null;nextTimeout=null}
-function notifyObservation(){nextObs.textContent="観測してください";if(navigator.vibrate)navigator.vibrate([100,80,100]);alert("観測タイミングです")}
-function scheduleRandom(){
- clearTiming();
- const [min,max]=randomRange.value.split(",").map(Number),sec=Math.floor(Math.random()*(max-min+1))+min,target=new Date(Date.now()+sec*1000);
- nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
- nextTimeout=setTimeout(()=>{notifyObservation();scheduleRandom()},sec*1000);
-}
+filterFactory.onchange=filterWorker.onchange=chartMode.onchange=renderSummary;
+factory.onchange=worker.onchange=renderMeasure;
+
 function applyTiming(){
- clearTiming();
- const m=mode.value; interval.style.display=m==="fixed"?"inline-block":"none"; randomRange.style.display=m==="random"?"inline-block":"none";
- if(m==="manual"){nextObs.textContent="手動"}
- else if(m==="fixed"){const sec=Number(interval.value);let target=new Date(Date.now()+sec*1000);nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});timer=setInterval(()=>{notifyObservation();target=new Date(Date.now()+sec*1000);nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"})},sec*1000)}
- else scheduleRandom();
+ if(timer){clearTimeout(timer);clearInterval(timer);timer=null}
+ if(mode.value==="manual"){timing.style.display="none";nextObs.textContent="手動";return}
+ timing.style.display="block";
+ let min,max;
+ if(mode.value==="fixed"){
+   const parts=timing.value.split(",").map(Number);min=max=Math.round((parts[0]+parts[1])/2);
+ }else [min,max]=timing.value.split(",").map(Number);
+ const sec=Math.floor(Math.random()*(max-min+1))+min,target=new Date(Date.now()+sec*1000);
+ nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+ timer=setTimeout(()=>{alert("観測タイミングです");applyTiming()},sec*1000);
 }
-mode.onchange=applyTiming;interval.onchange=applyTiming;randomRange.onchange=applyTiming;
+mode.onchange=timing.onchange=applyTiming;
 
-try{const saved=localStorage.getItem("dtekko_ws_pwa");if(saved)data=JSON.parse(saved)}catch(e){}
-renderButtons();render();applyTiming();
+window.addEventListener("resize",()=>{if(document.getElementById("page-summary").classList.contains("active"))renderSummary()});
 
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+ensureDB();refreshSelectors();renderButtons();renderAll();applyTiming();
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 </script>
 </body>
 </html>

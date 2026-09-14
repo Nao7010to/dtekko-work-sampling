@@ -187,11 +187,16 @@ th:first-child,td:first-child{text-align:left}
 .compare-card{padding:16px!important}
 .compare-title{font-size:18px!important;margin-bottom:4px!important}
 .compare-note{font-size:11px;color:var(--muted);margin-bottom:12px}
-.compare-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
+.compare-strip{display:flex;gap:0;overflow-x:auto;padding:2px 0 10px;scroll-snap-type:x proximity}
 .compare-unit{
-  flex:0 0 220px;border:1px solid var(--border);border-radius:15px;background:#fff;padding:12px;
+  flex:0 0 220px;box-sizing:border-box;border:1px solid var(--border);border-radius:0;background:#fff;padding:12px;
   scroll-snap-align:start
 }
+
+.compare-spacer{flex:0 0 150px;box-sizing:border-box;background:#f8fafc;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#64748b}
+.compare-unit.total-unit{background:#f4faff;border-color:#93c5fd}
+.compare-table th,.compare-table td{box-sizing:border-box}
+
 .compare-unit h3{font-size:16px;text-align:center;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .compare-unit .obs{text-align:center;font-size:10px;color:var(--muted);margin-bottom:5px}
 .compare-pie{height:190px}
@@ -202,10 +207,10 @@ th:first-child,td:first-child{text-align:left}
 .compare-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:11px}
 .compare-table{min-width:680px;margin:0;table-layout:fixed}.compare-table th:not(:first-child),.compare-table td:not(:first-child){width:220px;min-width:220px;text-align:center}
 .compare-table th{position:sticky;top:0;background:#f8fafc;z-index:1;white-space:nowrap}
-.compare-table th:first-child,.compare-table td:first-child{position:sticky;left:0;background:#fff;z-index:2;min-width:150px}
+.compare-table th:first-child,.compare-table td:first-child{position:sticky;left:0;background:#fff;z-index:2;width:150px;min-width:150px;max-width:150px}
 .compare-table thead th:first-child{background:#f8fafc;z-index:3}
 .compare-table tr.group-row td{font-weight:900;background:#f1f5f9!important;color:#334155}
-.compare-table td.zero{color:#cbd5e1}
+.compare-table td.zero{color:#cbd5e1}.compare-table .total-col{background:#f4faff!important;font-weight:900;border-left:2px solid #93c5fd}
 
 .ci-example{margin-top:16px;border:1px solid #bfdbfe;background:#f6fbff;border-radius:14px;padding:14px}
 .ci-example-head{font-size:14px;font-weight:900;color:#0b5f9d;margin-bottom:10px}
@@ -219,7 +224,7 @@ th:first-child,td:first-child{text-align:left}
   .compare-hero{align-items:stretch;flex-direction:column}
   .compare-switch{align-self:stretch}
   .compare-mode{flex:1}
-  .compare-unit{flex-basis:235px}
+  .compare-unit{flex-basis:220px}
   .entity-row{grid-template-columns:1fr auto}
   .entity-row .end-btn,.entity-row .restore-btn{grid-column:2}
 }
@@ -448,7 +453,7 @@ th:first-child,td:first-child{text-align:left}
 
   <div class="card compare-card">
     <div class="section-title compare-title" id="compareChartTitle">工場別 作業構成</div>
-    <div class="compare-note">円グラフは横にスクロールできます。各対象の「価値・付帯・ロス」を同じ尺度で比較します。</div>
+    <div class="compare-note">円グラフと下の詳細表は同じ列で揃い、横スクロールも連動します。右端に「工場全体」を表示します。</div>
     <div class="compare-strip" id="compareStrip"></div>
   </div>
 
@@ -1452,12 +1457,21 @@ function drawMiniPie(canvas, stats){
 function compareTargets(){
   const sess=currentSession();
   if(compareMode === "factory"){
-    return (sess.factories||[]).map(name => ({
-      name,label:name,events:sess.events.filter(e=>e.factory===name)
+    const activeFactories=(sess.factories||[]);
+    const rows=activeFactories.map(name => ({
+      name,label:name,events:sess.events.filter(e=>e.factory===name),isTotal:false
     }));
+    const activeSet=new Set(activeFactories);
+    rows.push({
+      name:"__ALL_FACTORIES__",
+      label:"工場全体",
+      events:sess.events.filter(e=>activeSet.has(e.factory)),
+      isTotal:true
+    });
+    return rows;
   }
   return (sess.workers||[]).map(name => ({
-    name,label:workerLabel(name),events:sess.events.filter(e=>e.worker===name)
+    name,label:workerLabel(name),events:sess.events.filter(e=>e.worker===name),isTotal:false
   }));
 }
 
@@ -1469,10 +1483,15 @@ function renderComparison(){
   els.compareTableTitle.textContent = unitLabel + "別 項目打点数";
   els.compareStrip.innerHTML = "";
 
+  const spacer=document.createElement("div");
+  spacer.className="compare-spacer";
+  spacer.textContent="作業項目";
+  els.compareStrip.appendChild(spacer);
+
   targets.forEach((t,idx)=>{
     const st = calcStats(t.events);
     const card = document.createElement("div");
-    card.className="compare-unit";
+    card.className="compare-unit" + (t.isTotal ? " total-unit" : "");
     const title=document.createElement("h3"); title.textContent=t.label;
     const obs=document.createElement("div"); obs.className="obs"; obs.textContent="観測 "+st.total+"回";
     const canvas=document.createElement("canvas"); canvas.className="compare-pie";
@@ -1491,6 +1510,30 @@ function renderComparison(){
   }
 
   renderComparisonTable(targets);
+  syncCompareScroll();
+}
+
+
+let compareScrollSyncing=false;
+function syncCompareScroll(){
+  const strip=document.getElementById("compareStrip");
+  const tableWrap=document.querySelector("#page-compare .compare-table-wrap");
+  if(!strip || !tableWrap || strip.dataset.synced==="1") return;
+  strip.dataset.synced="1";
+
+  strip.addEventListener("scroll",()=>{
+    if(compareScrollSyncing) return;
+    compareScrollSyncing=true;
+    tableWrap.scrollLeft=strip.scrollLeft;
+    requestAnimationFrame(()=>compareScrollSyncing=false);
+  });
+
+  tableWrap.addEventListener("scroll",()=>{
+    if(compareScrollSyncing) return;
+    compareScrollSyncing=true;
+    strip.scrollLeft=tableWrap.scrollLeft;
+    requestAnimationFrame(()=>compareScrollSyncing=false);
+  });
 }
 
 function renderComparisonTable(targets){
@@ -1499,7 +1542,12 @@ function renderComparisonTable(targets){
 
   const hr=document.createElement("tr");
   const h0=document.createElement("th"); h0.textContent="作業項目"; hr.appendChild(h0);
-  targets.forEach(t=>{const th=document.createElement("th");th.textContent=t.label;hr.appendChild(th);});
+  targets.forEach(t=>{
+    const th=document.createElement("th");
+    th.textContent=t.label;
+    if(t.isTotal) th.className="total-col";
+    hr.appendChild(th);
+  });
   els.compareTableHead.appendChild(hr);
 
   const types=[
@@ -1514,7 +1562,9 @@ function renderComparisonTable(targets){
     gr.appendChild(gd);
     targets.forEach(t=>{
       const st=calcStats(t.events); const td=document.createElement("td");
-      const n=st[group.type]; td.textContent=n+"件 ("+pct(n,st.total)+"%)"; gr.appendChild(td);
+      const n=st[group.type]; td.textContent=n+"件 ("+pct(n,st.total)+"%)";
+      if(t.isTotal) td.classList.add("total-col");
+      gr.appendChild(td);
     });
     els.compareTableBody.appendChild(gr);
 
@@ -1523,7 +1573,11 @@ function renderComparisonTable(targets){
       const name=document.createElement("td"); name.textContent=c.label; tr.appendChild(name);
       targets.forEach(t=>{
         const n=t.events.filter(e=>e.type===c.type && e.label===c.label).length;
-        const td=document.createElement("td");td.textContent=n; if(!n)td.className="zero";tr.appendChild(td);
+        const td=document.createElement("td");
+        td.textContent=n;
+        if(!n)td.classList.add("zero");
+        if(t.isTotal)td.classList.add("total-col");
+        tr.appendChild(td);
       });
       els.compareTableBody.appendChild(tr);
     });
@@ -1531,7 +1585,12 @@ function renderComparisonTable(targets){
 
   const total=document.createElement("tr"); total.className="group-row";
   const td0=document.createElement("td");td0.textContent="観測数 合計";total.appendChild(td0);
-  targets.forEach(t=>{const td=document.createElement("td");td.textContent=t.events.length+"件";total.appendChild(td);});
+  targets.forEach(t=>{
+    const td=document.createElement("td");
+    td.textContent=t.events.length+"件";
+    if(t.isTotal)td.classList.add("total-col");
+    total.appendChild(td);
+  });
   els.compareTableBody.appendChild(total);
 }
 

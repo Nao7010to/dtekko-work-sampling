@@ -145,6 +145,23 @@ th:first-child,td:first-child{text-align:left}
   .pareto-chart{height:400px}
 }
 
+
+.info-hero{background:linear-gradient(135deg,#172033,#334155);color:#fff;border-radius:18px;padding:24px 22px;margin-bottom:12px}
+.info-eyebrow{font-size:11px;letter-spacing:.16em;font-weight:800;opacity:.7}.info-hero h2{font-size:28px;margin:5px 0 8px}.info-hero p{font-size:15px;line-height:1.7;margin:0;opacity:.92}
+.info-card{padding:18px!important}.info-title{font-size:18px!important;margin-bottom:12px!important}.info-sub{font-size:12px;color:var(--muted);margin:-4px 0 13px}
+.ws-flow{max-width:620px;margin:0 auto;text-align:center}.flow-box{border:1px solid var(--border);background:#fff;border-radius:14px;padding:13px 16px;box-shadow:0 4px 14px rgba(23,32,51,.05)}
+.flow-box b{display:block;font-size:17px;margin-bottom:5px}.flow-box span{font-size:13px;color:#64748b;line-height:1.55}.flow-arrow{font-size:24px;line-height:30px;color:#94a3b8;font-weight:900}.result-box{border:2px solid #0b78c4;background:#f4faff}
+.mini-types{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.mini-types span{padding:8px 3px;border-radius:8px;font-weight:900;font-size:12px;color:#fff}.mini-types .mv{background:#0b78c4}.mini-types .ms{background:#9e9e9e}.mini-types .ml{background:#111827}
+.info-callout{margin-top:14px;background:#f8fafc;border-left:4px solid #0b78c4;padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.65;color:#475569}
+.accuracy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.accuracy-grid div{border:1px solid var(--border);border-radius:12px;text-align:center;padding:12px 5px;background:#fff}.accuracy-grid div.accent{border:2px solid #0b78c4;background:#f4faff}
+.accuracy-grid b{display:block;font-size:24px}.accuracy-grid span{display:block;font-size:10px;color:#64748b}.accuracy-grid strong{display:block;font-size:13px;margin-top:7px}
+.accuracy-line{display:flex;align-items:center;gap:9px;margin:14px 2px 8px;font-size:10px;color:#64748b}.accuracy-line .line{height:3px;flex:1;background:linear-gradient(90deg,#cbd5e1,#0b78c4);border-radius:99px}
+.info-small{font-size:10px;color:#7b8494;line-height:1.6;margin:10px 0 0}.current-accuracy{text-align:center;padding:18px!important}.current-accuracy .info-title{text-align:left}
+.current-number span{font-size:12px;color:#64748b}.current-number b{font-size:46px;margin-left:10px}.current-number em{font-size:15px;font-style:normal;margin-left:3px}
+.error-box{margin:12px auto 0;max-width:420px;background:#f8fafc;border-radius:14px;padding:14px}.error-box span,.error-box small{display:block;color:#64748b;font-size:11px}.error-box b{display:block;font-size:30px;margin:5px 0;color:#172033}
+.benefit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.benefit-grid div{background:#f8fafc;border-radius:12px;padding:12px}.benefit-grid b{display:block;font-size:14px;margin-bottom:4px}.benefit-grid span{font-size:11px;color:#64748b}
+@media(max-width:700px){.info-hero h2{font-size:24px}.accuracy-grid b{font-size:21px}.accuracy-grid strong{font-size:11px}}
+
 </style>
 </head>
 <body>
@@ -157,6 +174,7 @@ th:first-child,td:first-child{text-align:left}
     <button class="tab active" data-page="measure">測定</button>
     <button class="tab" data-page="summary">集計・グラフ</button>
     <button class="tab" data-page="data">データ管理</button>
+    <button class="tab" data-page="info">WS情報</button>
   </div>
 </header>
 
@@ -283,6 +301,59 @@ th:first-child,td:first-child{text-align:left}
   <div class="card">
     <div class="section-title">直近の観測</div>
     <div class="history" id="history"></div>
+  </div>
+</section>
+
+
+<section class="page" id="page-info">
+  <div class="info-hero">
+    <div class="info-eyebrow">WORK SAMPLING</div>
+    <h2>ワークサンプリングとは？</h2>
+    <p>作業者の「その瞬間」を多数観測し、現場全体の作業構成を統計的に推定するIE手法です。</p>
+  </div>
+
+  <div class="card info-card">
+    <div class="section-title info-title">仕組みを図で見る</div>
+    <div class="ws-flow">
+      <div class="flow-box"><b>① 観測する</b><span>一定間隔・ランダムなタイミングで<br>現場の「瞬間」を見る</span></div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box"><b>② 分類する</b><div class="mini-types"><span class="mv">価値作業</span><span class="ms">付帯作業</span><span class="ml">ロス作業</span></div></div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box"><b>③ 数を集める</b><span>観測を繰り返し、打点を蓄積する</span></div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box result-box"><b>④ 作業構成を推定する</b><span>どの作業に、どの程度の時間が使われているかを把握</span></div>
+    </div>
+    <div class="info-callout">すべての時間を連続測定しなくても、ランダムな瞬間を多数観測することで、作業割合を推定できます。</div>
+  </div>
+
+  <div class="card info-card">
+    <div class="section-title info-title">観測数が増えるほど、推定精度は高まる</div>
+    <p class="info-sub">95％信頼水準・作業比率50％を仮定した場合の目安</p>
+    <div class="accuracy-grid">
+      <div><b>100</b><span>観測</span><strong>約 ±9.8pt</strong></div>
+      <div class="accent"><b>200</b><span>観測</span><strong>約 ±6.9pt</strong></div>
+      <div><b>400</b><span>観測</span><strong>約 ±4.9pt</strong></div>
+      <div><b>1,000</b><span>観測</span><strong>約 ±3.1pt</strong></div>
+    </div>
+    <div class="accuracy-line"><span>粗く把握</span><div class="line"></div><span>より精密に把握</span></div>
+    <p class="info-small">※必要観測数は、信頼水準・許容誤差・対象となる作業比率によって変わります。「200回なら信頼度95％」と一律に決まるものではありません。</p>
+  </div>
+
+  <div class="card current-accuracy">
+    <div class="section-title info-title">この測定データの精度目安</div>
+    <div class="current-number"><span>現在の観測数</span><b id="infoObsCount">0</b><em>回</em></div>
+    <div class="error-box"><span>95％信頼水準・比率50％を仮定</span><b id="infoError">—</b><small>推定誤差の目安</small></div>
+    <p class="info-small">※統計上の目安です。観測時刻や対象者に偏りがある場合、観測数が多くても現場全体を適切に表さないことがあります。</p>
+  </div>
+
+  <div class="card info-card">
+    <div class="section-title info-title">ワークサンプリングで見えること</div>
+    <div class="benefit-grid">
+      <div><b>作業構成</b><span>価値・付帯・ロスの割合</span></div>
+      <div><b>改善の着眼点</b><span>何に時間を使っているか</span></div>
+      <div><b>比較</b><span>工場・作業者ごとの差</span></div>
+      <div><b>改善効果</b><span>改善前後の変化を確認</span></div>
+    </div>
   </div>
 </section>
 
@@ -1007,6 +1078,18 @@ function renderAll(){
   renderSessions();
 }
 
+
+function renderInfo(){
+  const countEl = document.getElementById("infoObsCount");
+  const errorEl = document.getElementById("infoError");
+  if(!countEl || !errorEl) return;
+  const n = currentSession().events.length;
+  countEl.textContent = n.toLocaleString("ja-JP");
+  if(n <= 0){ errorEl.textContent = "—"; return; }
+  const e = 1.96 * Math.sqrt(0.25 / n) * 100;
+  errorEl.textContent = "約 ±" + e.toFixed(1) + "pt";
+}
+
 function switchPage(pageName){
   document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-"+pageName));
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.page === pageName));
@@ -1014,6 +1097,7 @@ function switchPage(pageName){
     setTimeout(renderSummary,50);
     setTimeout(renderSummary,250);
   }
+  if(pageName === "info") renderInfo();
 }
 
 function exportCSV(){

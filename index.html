@@ -34,11 +34,11 @@ select,input{width:100%;min-height:34px;border:1px solid var(--border);border-ra
 .section-title{font-size:13px;font-weight:900;margin:0 0 6px}
 .category-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
 .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
-.workbox{border-radius:9px;padding:4px;min-height:53px;display:flex;flex-direction:column;gap:3px}
-.workbox.value{background:var(--value)}.workbox.support{background:var(--support)}.workbox.loss{background:var(--loss)}
-.addbtn{border:0;background:transparent;min-height:30px;font-size:12px;font-weight:900;padding:2px;line-height:1.15}
+.workbox{border-radius:9px;min-height:38px;display:grid;grid-template-columns:34px 1fr;gap:5px;align-items:stretch}
+.workbox.value{background:transparent}.workbox.support{background:transparent}.workbox.loss{background:transparent}
+.addbtn{border:0;border-radius:8px;min-height:38px;font-size:12px;font-weight:900;padding:4px 6px;line-height:1.15}
 .count{display:block;font-size:10px;color:var(--muted);margin-top:2px}
-.minusbtn{border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.72);border-radius:7px;min-height:22px;padding:1px;font-size:11px;font-weight:900}
+.minusbtn{border:2px solid #ff2b2b;background:#ff0000;color:#fff;border-radius:7px;min-height:38px;padding:0;font-size:22px;font-weight:900;line-height:1}
 .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .metric{background:#f8fafc;border:1px solid var(--border);border-radius:9px;text-align:center;padding:6px 3px;font-size:10px}
 .metric b{display:block;font-size:16px;margin-top:2px}
@@ -76,6 +76,11 @@ th:first-child,td:first-child{text-align:left}
  .metrics{grid-template-columns:repeat(3,1fr)}
  .actions{grid-template-columns:repeat(2,1fr)}
 }
+
+.workbox.value .addbtn{background:#cfe6ff}
+.workbox.support .addbtn{background:#e3e3e3}
+.workbox.loss .addbtn{background:#f1f1f1}
+
 </style>
 </head>
 <body>
@@ -115,7 +120,7 @@ th:first-child,td:first-child{text-align:left}
    <div class="metrics">
      <div class="metric">観測数<b id="mTotal">0</b></div>
      <div class="metric">価値<b id="mValue">0%</b></div>
-     <div class="metric">付随<b id="mSupport">0%</b></div>
+     <div class="metric">付帯<b id="mSupport">0%</b></div>
      <div class="metric">ロス<b id="mLoss">0%</b></div>
      <div class="metric">平均R<b id="mRating">-</b></div>
      <div class="metric next">次回<b id="nextObs">手動</b></div>
@@ -123,7 +128,7 @@ th:first-child,td:first-child{text-align:left}
  </div>
 
  <div class="card"><div class="section-title">価値作業</div><div class="grid" id="valueGrid"></div></div>
- <div class="card"><div class="section-title">付随作業</div><div class="grid" id="supportGrid"></div></div>
+ <div class="card"><div class="section-title">付帯作業</div><div class="grid" id="supportGrid"></div></div>
  <div class="card"><div class="section-title">ロス</div><div class="grid" id="lossGrid"></div></div>
 
  <div class="card">
@@ -143,11 +148,7 @@ th:first-child,td:first-child{text-align:left}
    <div class="filter-row">
      <select id="filterFactory"></select>
      <select id="filterWorker"></select>
-     <select id="chartMode">
-       <option value="type">価値・付随・ロス</option>
-       <option value="item">作業項目別</option>
-       <option value="worker">作業者別</option>
-     </select>
+     <select id="chartMode" disabled><option value="type" selected>価値作業・付帯作業・ロス作業</option></select>
    </div>
  </div>
 
@@ -155,7 +156,7 @@ th:first-child,td:first-child{text-align:left}
    <div class="metrics">
      <div class="metric">観測数<b id="sTotal">0</b></div>
      <div class="metric">価値<b id="sValue">0%</b></div>
-     <div class="metric">付随<b id="sSupport">0%</b></div>
+     <div class="metric">付帯<b id="sSupport">0%</b></div>
      <div class="metric">ロス<b id="sLoss">0%</b></div>
      <div class="metric">平均R<b id="sRating">-</b></div>
      <div class="metric">対象<b id="sTarget">全体</b></div>
@@ -168,10 +169,10 @@ th:first-child,td:first-child{text-align:left}
  </div>
 
  <div class="card">
-   <div class="section-title">作業者別一覧</div>
+   <div class="section-title">ワークサンプリング集計表</div>
    <div class="table-wrap">
     <table>
-      <thead><tr><th>工場</th><th>作業者</th><th>観測</th><th>価値</th><th>付随</th><th>ロス</th><th>平均R</th></tr></thead>
+      <thead><tr><th>分類</th><th>打点数</th><th>構成比</th></tr></thead>
       <tbody id="summaryTable"></tbody>
     </table>
    </div>
@@ -290,11 +291,11 @@ function renderButtons(){
   const g=document.getElementById(type+"Grid");g.innerHTML="";
   CATEGORIES.filter(c=>c.type===type).forEach(c=>{
    const box=document.createElement("div");box.className="workbox "+type;
+   const minus=document.createElement("button");minus.className="minusbtn";minus.textContent="−";minus.onclick=()=>removeMatching(c);
    const add=document.createElement("button");add.className="addbtn";
    add.innerHTML=`${c.label}<span class="count" id="cnt-${CSS.escape(c.label)}">0</span>`;
    add.onclick=()=>addEvent(c);
-   const minus=document.createElement("button");minus.className="minusbtn";minus.textContent="−1";minus.onclick=()=>removeMatching(c);
-   box.append(add,minus);g.appendChild(box);
+   box.append(minus,add);g.appendChild(box);
   });
  });
 }
@@ -321,13 +322,14 @@ function renderSummary(){
  sTotal.textContent=s.total;sValue.textContent=pct(s.value,s.total)+"%";sSupport.textContent=pct(s.support,s.total)+"%";sLoss.textContent=pct(s.loss,s.total)+"%";sRating.textContent=avgR(s);
  sTarget.textContent=(ff==="ALL"?"全工場":ff)+" / "+(fw==="ALL"?"全作業者":fw);
  summaryTable.innerHTML="";
- db.factories.forEach(f=>WORKERS.forEach(w=>{
-   const e=current().events.filter(x=>x.factory===f&&x.worker===w);
-   if(!e.length)return;
-   const st=stats(e),tr=document.createElement("tr");
-   tr.innerHTML=`<td>${f}</td><td>${w}</td><td>${st.total}</td><td>${pct(st.value,st.total)}%</td><td>${pct(st.support,st.total)}%</td><td>${pct(st.loss,st.total)}%</td><td>${avgR(st)}</td>`;
+ [["価値作業",s.value],["付帯作業",s.support],["ロス作業",s.loss]].forEach(([label,count])=>{
+   const tr=document.createElement("tr");
+   tr.innerHTML=`<td>${label}</td><td>${count}</td><td>${pct(count,s.total)}%</td>`;
    summaryTable.appendChild(tr);
- }));
+ });
+ const totalRow=document.createElement("tr");
+ totalRow.innerHTML=`<td><b>合計</b></td><td><b>${s.total}</b></td><td><b>${s.total?100:0}%</b></td>`;
+ summaryTable.appendChild(totalRow);
  history.innerHTML="";
  ev.slice(-40).reverse().forEach(e=>{
    const d=new Date(e.ts),div=document.createElement("div");div.className="history-item";
@@ -337,25 +339,54 @@ function renderSummary(){
  drawChart(ev);
 }
 function drawChart(events){
- const canvas=chart,ctx=canvas.getContext("2d"),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
- canvas.width=Math.max(300,rect.width*dpr);canvas.height=Math.max(180,rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
- const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);ctx.font="11px -apple-system,sans-serif";ctx.fillStyle="#182230";
- let labels=[],vals=[];
- if(chartMode.value==="type"){
-   const s=stats(events);labels=["価値","付随","ロス"];vals=[s.value,s.support,s.loss];
- }else if(chartMode.value==="item"){
-   const s=stats(events);labels=CATEGORIES.map(c=>c.label);vals=labels.map(l=>s.items[l]||0);
- }else{
-   labels=WORKERS.map(w=>"作業者"+w);vals=WORKERS.map(w=>events.filter(e=>e.worker===w).length);
+ const canvas=document.getElementById("chart"),ctx=canvas.getContext("2d"),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+ canvas.width=Math.max(300,rect.width*dpr);canvas.height=Math.max(220,rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+ const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
+
+ if(!events.length){
+   ctx.fillStyle="#687387";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="13px -apple-system,sans-serif";
+   ctx.fillText("まだ集計データがありません",W/2,H/2);
+   return;
  }
- const max=Math.max(1,...vals),left=90,right=20,top=10,bottom=10,row=(H-top-bottom)/Math.max(1,labels.length);
+
+ const st=stats(events);
+ const values=[st.value,st.support,st.loss];
+ const labels=["価値作業","付帯作業","ロス作業"];
+ const colors=["#0b78c4","#9e9e9e","#000000"];
+ const total=values.reduce((a,b)=>a+b,0);
+
+ const cx=W*0.38, cy=H*0.50, r=Math.min(W*0.28,H*0.42);
+ let start=-Math.PI/2;
+
+ values.forEach((v,i)=>{
+   const ang=total?Math.PI*2*(v/total):0;
+   ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+ang);ctx.closePath();
+   ctx.fillStyle=colors[i];ctx.fill();
+   ctx.lineWidth=4;ctx.strokeStyle="#ffffff";ctx.stroke();
+
+   if(v>0){
+     const mid=start+ang/2;
+     const tx=cx+Math.cos(mid)*r*0.58, ty=cy+Math.sin(mid)*r*0.58;
+     ctx.fillStyle="#ffffff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="700 14px -apple-system,sans-serif";
+     ctx.fillText(labels[i],tx,ty-8);
+     ctx.font="700 16px -apple-system,sans-serif";
+     ctx.fillText(Math.round(v/total*100)+"%",tx,ty+12);
+   }
+   start+=ang;
+ });
+
+ // legend / summary
+ const lx=W*0.72, ly=H*0.27;
+ ctx.textAlign="left";ctx.textBaseline="middle";
  labels.forEach((lab,i)=>{
-   const y=top+i*row+row*.15,h=row*.6,w=(W-left-right)*(vals[i]/max);
-   ctx.fillStyle="#687387";ctx.textAlign="right";ctx.textBaseline="middle";
-   const shown=lab.length>9?lab.slice(0,8)+"…":lab;ctx.fillText(shown,left-6,y+h/2);
-   ctx.fillStyle="#e8edf5";ctx.fillRect(left,y,W-left-right,h);
-   ctx.fillStyle="#2457d6";ctx.fillRect(left,y,w,h);
-   ctx.fillStyle="#182230";ctx.textAlign="left";ctx.fillText(String(vals[i]),Math.min(W-right-18,left+w+5),y+h/2);
+   const y=ly+i*48;
+   ctx.fillStyle=colors[i];ctx.fillRect(lx,y-10,18,18);
+   ctx.fillStyle="#182230";ctx.font="700 13px -apple-system,sans-serif";
+   ctx.fillText(lab,lx+28,y);
+   ctx.font="13px -apple-system,sans-serif";
+   const p=total?Math.round(values[i]/total*100):0;
+   ctx.fillText(p+"%",lx+120,y);
+   ctx.fillText(String(values[i]),lx+175,y);
  });
 }
 
@@ -377,7 +408,7 @@ function renderAll(){renderMeasure();renderSummary();renderSessions()}
 function switchPage(name){
  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===name));
- if(name==="summary")setTimeout(renderSummary,20);
+ if(name==="summary"){setTimeout(renderSummary,60);setTimeout(renderSummary,250);}
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchPage(t.dataset.page));
 goSummary.onclick=()=>switchPage("summary");
@@ -428,6 +459,49 @@ function applyTiming(){
 mode.onchange=timing.onchange=applyTiming;
 
 window.addEventListener("resize",()=>{if(document.getElementById("page-summary").classList.contains("active"))renderSummary()});
+
+
+// iPad Safari compatibility: explicitly resolve all DOM elements
+const factory=document.getElementById("factory");
+const worker=document.getElementById("worker");
+const rating=document.getElementById("rating");
+const mode=document.getElementById("mode");
+const timing=document.getElementById("timing");
+const filterFactory=document.getElementById("filterFactory");
+const filterWorker=document.getElementById("filterWorker");
+const chartMode=document.getElementById("chartMode");
+
+const mTotal=document.getElementById("mTotal");
+const mValue=document.getElementById("mValue");
+const mSupport=document.getElementById("mSupport");
+const mLoss=document.getElementById("mLoss");
+const mRating=document.getElementById("mRating");
+const nextObs=document.getElementById("nextObs");
+
+const sTotal=document.getElementById("sTotal");
+const sValue=document.getElementById("sValue");
+const sSupport=document.getElementById("sSupport");
+const sLoss=document.getElementById("sLoss");
+const sRating=document.getElementById("sRating");
+const sTarget=document.getElementById("sTarget");
+
+const summaryTable=document.getElementById("summaryTable");
+const history=document.getElementById("history");
+const currentSessionLabel=document.getElementById("currentSessionLabel");
+const sessionList=document.getElementById("sessionList");
+const renameSession=document.getElementById("renameSession");
+const newSessionName=document.getElementById("newSessionName");
+
+const undo=document.getElementById("undo");
+const quickSave=document.getElementById("quickSave");
+const goSummary=document.getElementById("goSummary");
+const csvCurrent=document.getElementById("csvCurrent");
+const newSession=document.getElementById("newSession");
+const renameBtn=document.getElementById("renameBtn");
+const saveSession=document.getElementById("saveSession");
+const csvSession=document.getElementById("csvSession");
+const clearCurrent=document.getElementById("clearCurrent");
+const exportBackup=document.getElementById("exportBackup");
 
 ensureDB();refreshSelectors();renderButtons();renderAll();applyTiming();
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));

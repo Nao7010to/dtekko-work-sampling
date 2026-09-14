@@ -294,6 +294,35 @@ th:first-child,td:first-child{text-align:left}
 .busy-overlay.open{display:flex}
 .busy-box{background:#fff;border-radius:16px;padding:22px 26px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-weight:900;text-align:center}
 @media(max-width:800px){.export-actions,.template-tools,.rating-bulk-grid{grid-template-columns:1fr 1fr}}
+
+.manage-menu-card{padding:12px}
+.manage-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.manage-accordion{display:flex;flex-direction:column;gap:7px}
+.manage-accordion-btn{
+  width:100%;border:1px solid var(--border);background:#fff;border-radius:12px;
+  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+  text-align:left;cursor:pointer;transition:.18s ease;min-height:54px
+}
+.manage-accordion-btn:hover{background:#f8fafc}
+.manage-accordion-btn.active{border-color:#94a3b8;background:#f8fafc}
+.manage-accordion-btn>span:first-child{display:flex;flex-direction:column;gap:3px}
+.manage-accordion-btn b{font-size:14px;color:#172033}
+.manage-accordion-btn small{font-size:10px;color:#7a8798;font-weight:600}
+.manage-accordion-btn.subtle b{color:#475569}
+.manage-chevron{font-size:22px;line-height:1;color:#64748b;transform:rotate(0deg);transition:.18s ease}
+.manage-accordion-btn.active .manage-chevron{transform:rotate(180deg)}
+.manage-panel{
+  display:none;border:1px solid var(--border);border-radius:12px;background:#fbfcfe;
+  padding:12px;margin-top:-2px
+}
+.manage-panel.open{display:block}
+.compact-danger{margin:0;border-radius:12px}
+.current-data-card{padding-bottom:13px}
+@media(max-width:800px){
+  .manage-accordion-btn{padding:11px 12px}
+  .manage-panel{padding:10px}
+}
+
 </style>
 </head>
 <body>
@@ -534,133 +563,167 @@ th:first-child,td:first-child{text-align:left}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card current-data-card">
     <div class="section-title">現在のデータ</div>
     <div class="inline">
       <input id="renameInput" placeholder="データ名">
       <button class="action" id="renameBtn">名称変更</button>
     </div>
     <div class="auto-save-status"><span class="auto-save-dot"></span>変更内容は自動保存されます</div>
-    <div class="export-actions">
-      <button class="action" id="csvSessionBtn">CSV出力</button>
-      <button class="action primary" id="excelBtn">Excel出力</button>
-      <button class="action primary" id="pptBtn">PPT提案資料化</button>
-    </div>
-    <div class="actions" style="margin-top:7px">
-      <button class="action danger-text" id="clearBtn">現在データ消去</button>
-    </div>
-    <div class="output-note">Excel/PPTは現在開いている保存データだけを対象に出力します。別の保存データは混ざりません。</div>
   </div>
 
-  <div class="card">
-    <div class="section-title">作業項目・テンプレート設定</div>
-    <p class="small">テンプレートは現在の測定データ専用の作業項目としてコピーされます。元テンプレート自体は変更されません。</p>
+  <div class="card manage-menu-card">
+    <div class="manage-menu-head">
+      <div>
+        <div class="section-title">データ管理メニュー</div>
+        <div class="small">必要な項目だけ開いて編集できます。別ページ・別タブには移動しません。</div>
+      </div>
+    </div>
 
-    <div class="template-bar">
-      <select id="templateSelect"></select>
-      <button class="action primary" id="applyTemplateBtn">テンプレートを適用</button>
-    </div>
-    <div class="template-tools">
-      <input id="templateNameInput" placeholder="テンプレート名">
-      <button class="action" id="renameTemplateBtn">名前変更</button>
-      <button class="action" id="saveTemplateBtn">現在の項目で更新</button>
-      <button class="action primary" id="addTemplateBtn">＋ 新規テンプレート登録</button>
-    </div>
-    <div class="template-tools" style="grid-template-columns:1fr">
-      <button class="action danger-text" id="deleteTemplateBtn">選択テンプレートを削除</button>
-    </div>
-    <div class="template-editor-note small">自作テンプレートは保存データをまたいで共通利用できます。適用後の作業項目は、その保存データ専用のコピーとして独立します。</div>
-    <p class="small template-note">観測データがある状態では既存項目を上書きせず、新しい測定データを作成してテンプレートを適用します。</p>
+    <div class="manage-accordion">
+      <button class="manage-accordion-btn" type="button" data-manage-target="manage-output">
+        <span><b>出力</b><small>CSV / Excel / PPT</small></span><span class="manage-chevron">⌄</span>
+      </button>
+      <div class="manage-panel" id="manage-output">
+        <div class="export-actions">
+          <button class="action" id="csvSessionBtn">CSV出力</button>
+          <button class="action primary" id="excelBtn">Excel出力</button>
+          <button class="action primary" id="pptBtn">PPT提案資料化</button>
+        </div>
+        <div class="output-note">現在開いている保存データだけを対象に出力します。別の保存データは混ざりません。</div>
+      </div>
 
-    <div class="category-settings">
-      <div class="category-setting-card value-setting">
-        <div class="category-setting-title">価値作業</div>
-        <div id="valueItemSettings" class="item-settings-list"></div>
-        <div class="entity-add">
-          <input id="newValueItem" placeholder="価値作業の項目名">
-          <button class="action primary" id="addValueItemBtn">＋ 項目追加</button>
+      <button class="manage-accordion-btn" type="button" data-manage-target="manage-rating">
+        <span><b>レーティング</b><small>過去データを一括変更</small></span><span class="manage-chevron">⌄</span>
+      </button>
+      <div class="manage-panel" id="manage-rating">
+        <p class="small">現在開いている保存データだけが対象です。工場・作業者・工場×作業者を指定して変更できます。</p>
+        <div class="rating-bulk-grid">
+          <div><span class="field-label">対象</span><select id="bulkRatingScope">
+            <option value="all">全観測</option><option value="factory">工場</option><option value="worker">作業者</option><option value="factoryWorker">工場 × 作業者</option>
+          </select></div>
+          <div><span class="field-label">工場</span><select id="bulkRatingFactory"></select></div>
+          <div><span class="field-label">作業者</span><select id="bulkRatingWorker"></select></div>
+          <div><span class="field-label">変更後</span><select id="bulkRatingValue">
+            <option value="50">50%</option><option value="80">80%</option><option value="100" selected>100%</option><option value="120">120%</option>
+          </select></div>
+          <button class="action primary" id="bulkRatingApplyBtn">一括変更</button>
+        </div>
+        <div class="rating-target-count" id="bulkRatingCount">対象：0件</div>
+      </div>
+
+      <button class="manage-accordion-btn" type="button" data-manage-target="manage-template">
+        <span><b>テンプレート編集</b><small>選択 / 追加 / 名前変更 / 削除</small></span><span class="manage-chevron">⌄</span>
+      </button>
+      <div class="manage-panel" id="manage-template">
+        <div class="template-bar">
+          <select id="templateSelect"></select>
+          <button class="action primary" id="applyTemplateBtn">テンプレートを適用</button>
+        </div>
+        <div class="template-tools">
+          <input id="templateNameInput" placeholder="テンプレート名">
+          <button class="action" id="renameTemplateBtn">名前変更</button>
+          <button class="action" id="saveTemplateBtn">現在の項目で更新</button>
+          <button class="action primary" id="addTemplateBtn">＋ 新規テンプレート登録</button>
+        </div>
+        <div class="template-tools" style="grid-template-columns:1fr">
+          <button class="action danger-text" id="deleteTemplateBtn">選択テンプレートを削除</button>
+        </div>
+        <div class="template-editor-note small">自作テンプレートは保存データをまたいで共通利用できます。適用後の作業項目は、その保存データ専用のコピーとして独立します。</div>
+        <p class="small template-note">観測データがある状態では既存項目を上書きせず、新しい測定データを作成してテンプレートを適用します。</p>
+      </div>
+
+      <button class="manage-accordion-btn" type="button" data-manage-target="manage-items">
+        <span><b>作業項目設定</b><small>追加 / 名称変更 / 並び替え / 使用終了</small></span><span class="manage-chevron">⌄</span>
+      </button>
+      <div class="manage-panel" id="manage-items">
+        <p class="small">この保存データ専用の作業項目です。ほかの保存データには影響しません。</p>
+        <div class="category-settings">
+          <div class="category-setting-card value-setting">
+            <div class="category-setting-title">価値作業</div>
+            <div id="valueItemSettings" class="item-settings-list"></div>
+            <div class="entity-add">
+              <input id="newValueItem" placeholder="価値作業の項目名">
+              <button class="action primary" id="addValueItemBtn">＋ 項目追加</button>
+            </div>
+          </div>
+
+          <div class="category-setting-card support-setting">
+            <div class="category-setting-title">付帯作業</div>
+            <div id="supportItemSettings" class="item-settings-list"></div>
+            <div class="entity-add">
+              <input id="newSupportItem" placeholder="付帯作業の項目名">
+              <button class="action primary" id="addSupportItemBtn">＋ 項目追加</button>
+            </div>
+          </div>
+
+          <div class="category-setting-card loss-setting">
+            <div class="category-setting-title">ロス作業</div>
+            <div id="lossItemSettings" class="item-settings-list"></div>
+            <div class="entity-add">
+              <input id="newLossItem" placeholder="ロス作業の項目名">
+              <button class="action primary" id="addLossItemBtn">＋ 項目追加</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="category-setting-card support-setting">
-        <div class="category-setting-title">付帯作業</div>
-        <div id="supportItemSettings" class="item-settings-list"></div>
+      <button class="manage-accordion-btn" type="button" data-manage-target="manage-workers">
+        <span><b>作業者設定</b><small>追加 / 名称変更 / 使用終了 / 削除</small></span><span class="manage-chevron">⌄</span>
+      </button>
+      <div class="manage-panel" id="manage-workers">
+        <p class="small">この保存データ専用です。別の保存データから作業者情報は引き継ぎません。</p>
+        <div class="entity-list" id="workerSettingsList"></div>
         <div class="entity-add">
-          <input id="newSupportItem" placeholder="付帯作業の項目名">
-          <button class="action primary" id="addSupportItemBtn">＋ 項目追加</button>
+          <input id="newWorkerName" placeholder="例：作業者G / 佐藤">
+          <button class="action primary" id="addWorkerBtn">＋ 作業者を追加</button>
         </div>
       </div>
 
-      <div class="category-setting-card loss-setting">
-        <div class="category-setting-title">ロス作業</div>
-        <div id="lossItemSettings" class="item-settings-list"></div>
+      <button class="manage-accordion-btn" type="button" data-manage-target="manage-factories">
+        <span><b>工場設定</b><small>追加 / 名称変更 / 使用終了 / 削除</small></span><span class="manage-chevron">⌄</span>
+      </button>
+      <div class="manage-panel" id="manage-factories">
+        <p class="small">この保存データ専用です。別の保存データから工場情報は引き継ぎません。</p>
+        <div class="entity-list" id="factorySettingsList"></div>
         <div class="entity-add">
-          <input id="newLossItem" placeholder="ロス作業の項目名">
-          <button class="action primary" id="addLossItemBtn">＋ 項目追加</button>
+          <input id="newFactoryName" placeholder="例：第4工場">
+          <button class="action primary" id="addFactoryBtn">＋ 工場を追加</button>
+        </div>
+      </div>
+
+      <button class="manage-accordion-btn subtle" type="button" data-manage-target="manage-cleanup">
+        <span><b>データ整理</b><small>観測データのクリア / 削除済み</small></span><span class="manage-chevron">⌄</span>
+      </button>
+      <div class="manage-panel" id="manage-cleanup">
+        <div class="danger-card compact-danger">
+          <div class="section-title">工場単位のデータクリア</div>
+          <div class="small">選択した工場の観測データだけを削除します。工場名や他の工場、別の保存データには影響しません。</div>
+          <div class="danger-row">
+            <select id="clearFactorySelect" aria-label="クリアする工場"></select>
+            <button id="clearFactoryBtn" class="danger-action">選択工場の観測データをクリア</button>
+          </div>
+          <div class="danger-note">※観測データのクリアは元に戻せません。実行前に対象工場と件数を必ず確認してください。</div>
+        </div>
+
+        <div class="actions" style="margin-top:10px">
+          <button class="action danger-text" id="clearBtn">現在データの観測結果をすべて消去</button>
+        </div>
+
+        <div class="trash-toggle-wrap">
+          <button class="action trash-toggle" id="trashToggleBtn">削除済みを見る</button>
+        </div>
+        <div class="trash-panel" id="trashPanel">
+          <div class="section-title">削除済みデータ</div>
+          <div class="small">誤って削除した項目・工場・作業者・保存データ・テンプレートをここから復活できます。</div>
+          <div id="trashContents"></div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="section-title">レーティング一括変更</div>
-    <p class="small">現在開いている保存データだけが対象です。工場・作業者・工場×作業者を指定して、過去の観測レーティングをまとめて変更できます。</p>
-    <div class="rating-bulk-grid">
-      <div><span class="field-label">対象</span><select id="bulkRatingScope">
-        <option value="all">全観測</option><option value="factory">工場</option><option value="worker">作業者</option><option value="factoryWorker">工場 × 作業者</option>
-      </select></div>
-      <div><span class="field-label">工場</span><select id="bulkRatingFactory"></select></div>
-      <div><span class="field-label">作業者</span><select id="bulkRatingWorker"></select></div>
-      <div><span class="field-label">変更後</span><select id="bulkRatingValue">
-        <option value="50">50%</option><option value="80">80%</option><option value="100" selected>100%</option><option value="120">120%</option>
-      </select></div>
-      <button class="action primary" id="bulkRatingApplyBtn">一括変更</button>
-    </div>
-    <div class="rating-target-count" id="bulkRatingCount">対象：0件</div>
-  </div>
-
-  <div class="card">
-    <div class="section-title">工場設定</div>
-    <p class="small">この保存データ専用の設定です。新規作成・過去データの呼び出しを含め、他の保存データとは完全に独立します。観測済みの工場は「使用終了」で過去データを残せます。</p>
-    <div class="entity-list" id="factorySettingsList"></div>
-    <div class="entity-add">
-      <input id="newFactoryName" placeholder="例：第4工場">
-      <button class="action primary" id="addFactoryBtn">＋ 工場を追加</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="section-title">作業者設定</div>
-    <p class="small">この保存データ専用です。工場名・作業者名・作業項目・選択状態は、他の保存データから引き継ぎません。</p>
-    <div class="entity-list" id="workerSettingsList"></div>
-    <div class="entity-add">
-      <input id="newWorkerName" placeholder="例：作業者G / 佐藤">
-      <button class="action primary" id="addWorkerBtn">＋ 作業者を追加</button>
-    </div>
-  </div>
-
-  <div class="card">
-    
-  <div class="card danger-card">
-    <div class="section-title">工場単位のデータクリア</div>
-    <div class="small">現在開いている測定データの中から、選択した工場の観測データだけを削除します。工場名や他の工場、別の新規作成データには影響しません。</div>
-    <div class="danger-row">
-      <select id="clearFactorySelect" aria-label="クリアする工場"></select>
-      <button id="clearFactoryBtn" class="danger-action">選択工場の観測データをクリア</button>
-    </div>
-    <div class="danger-note">※観測データのクリアは元に戻せません。実行前に対象工場と件数を必ず確認してください。</div>
-  </div>
-
-<div class="trash-toggle-wrap">
-      <button class="action trash-toggle" id="trashToggleBtn">削除済み</button>
-    </div>
-    <div class="trash-panel" id="trashPanel">
-      <div class="section-title">削除済みデータ</div>
-      <div class="small">誤って削除した項目・工場・作業者・保存データ・テンプレートをここから復活できます。</div>
-      <div id="trashContents"></div>
-    </div>
-
-<div class="section-title">保存済みデータ</div>
+    <div class="section-title">保存済みデータ</div>
     <div class="session-list" id="sessionList"></div>
   </div>
 </section>
@@ -2585,7 +2648,29 @@ if(els.clearFactoryBtn){
   els.clearFactoryBtn.addEventListener("click", clearSelectedFactoryData);
 }
 
+
+function setupManageAccordion(){
+  const buttons=[...document.querySelectorAll(".manage-accordion-btn")];
+  const panels=[...document.querySelectorAll(".manage-panel")];
+
+  buttons.forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const target=document.getElementById(btn.dataset.manageTarget);
+      const willOpen=!target.classList.contains("open");
+
+      panels.forEach(p=>p.classList.remove("open"));
+      buttons.forEach(b=>b.classList.remove("active"));
+
+      if(willOpen){
+        target.classList.add("open");
+        btn.classList.add("active");
+      }
+    });
+  });
+}
+
 loadDB();
+setupManageAccordion();
 activateSession(db.currentId,{goMeasure:false});
 
 if("serviceWorker" in navigator){

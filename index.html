@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f5f7fb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="電機鉄工WS">
+<title>電機鉄工 ワークサンプリング</title>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#fff; --text:#182230; --muted:#687387;
+  --accent:#2457d6; --border:#dfe5ee; --good:#e8f6ec; --warn:#fff4d6; --bad:#fde8e8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif}
+body{padding-bottom:env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:5;background:rgba(245,247,251,.96);backdrop-filter:blur(8px);padding:12px;border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top))}
+h1{font-size:20px;margin:0 0 10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+select,button{font:inherit}
+select{padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;font-weight:700;min-height:44px}
+.wrap{padding:12px;max-width:1100px;margin:auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(22,34,51,.04)}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.metric{padding:12px;border-radius:14px;background:#f8fafc;border:1px solid var(--border);text-align:center}
+.metric b{display:block;font-size:24px;margin-top:4px}
+.section-title{font-size:15px;font-weight:800;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.workbtn{min-height:82px;border:0;border-radius:16px;padding:10px;font-weight:800;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.05);touch-action:manipulation}
+.workbtn:active{transform:scale(.98)}
+.value{background:var(--good)}
+.support{background:var(--warn)}
+.loss{background:var(--bad)}
+.count{display:block;font-size:12px;color:var(--muted);margin-top:5px}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.action{border:1px solid var(--border);background:#fff;border-radius:12px;padding:12px;font-weight:800;min-height:48px}
+.primary{background:var(--accent);color:white;border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 7px;border-bottom:1px solid var(--border);text-align:right}
+th:first-child,td:first-child{text-align:left}
+.bar{height:12px;border-radius:999px;background:#eef2f7;overflow:hidden}
+.fill{height:100%;background:var(--accent);width:0%}
+.small{font-size:12px;color:var(--muted)}
+.history{max-height:260px;overflow:auto}
+.history-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.notice{padding:10px 12px;border-radius:12px;background:#eef4ff;border:1px solid #cfdcff;font-size:13px;margin-bottom:12px}
+@media(max-width:700px){
+ .meta{grid-template-columns:repeat(2,1fr)}
+ .grid{grid-template-columns:repeat(2,1fr)}
+ .actions{grid-template-columns:repeat(2,1fr)}
+ .workbtn{min-height:88px;font-size:17px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>電機鉄工 ワークサンプリング</h1>
+  <div class="row">
+    <select id="worker"></select>
+    <select id="rating">
+      <option value="50">R 50</option>
+      <option value="80">R 80</option>
+      <option value="100" selected>R 100</option>
+      <option value="120">R 120</option>
+    </select>
+    <select id="mode">
+      <option value="manual">手動観測</option>
+      <option value="fixed">固定間隔</option>
+      <option value="random" selected>ランダム間隔</option>
+    </select>
+    <select id="interval">
+      <option value="60">1分</option>
+      <option value="120">2分</option>
+      <option value="300" selected>5分</option>
+      <option value="600">10分</option>
+    </select>
+    <select id="randomRange">
+      <option value="180,480">3〜8分</option>
+      <option value="300,600" selected>5〜10分</option>
+      <option value="300,900">5〜15分</option>
+      <option value="600,1200">10〜20分</option>
+    </select>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="notice">ホーム画面に追加すると、iPadでアプリのように使えます。データは端末内に自動保存されます。</div>
+
+  <div class="card">
+    <div class="meta">
+      <div class="metric">総観測数<b id="total">0</b></div>
+      <div class="metric">価値作業<b id="valuePct">0%</b></div>
+      <div class="metric">付随作業<b id="supportPct">0%</b></div>
+      <div class="metric">ロス<b id="lossPct">0%</b></div>
+      <div class="metric">平均R<b id="avgRating">100</b></div>
+      <div class="metric" style="grid-column:span 3">次回観測<b id="nextObs">手動</b></div>
+    </div>
+  </div>
+
+  <div class="card"><div class="section-title">価値作業</div><div class="grid" id="valueGrid"></div></div>
+  <div class="card"><div class="section-title">付随作業</div><div class="grid" id="supportGrid"></div></div>
+  <div class="card"><div class="section-title">ロス</div><div class="grid" id="lossGrid"></div></div>
+
+  <div class="card">
+    <div class="actions">
+      <button class="action" id="undo">↩ 1回取消</button>
+      <button class="action" id="resetWorker">作業者のみリセット</button>
+      <button class="action" id="csv">CSV出力</button>
+      <button class="action primary" id="save">今すぐ保存</button>
+    </div>
+    <p class="small">レーティング目安：50=かなり遅い / 80=やや遅い / 100=標準 / 120=速い</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">作業者別集計</div>
+    <table>
+      <thead><tr><th>作業者</th><th>観測数</th><th>価値</th><th>付随</th><th>ロス</th><th>平均R</th></tr></thead>
+      <tbody id="workerTable"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">全体比率</div>
+    <div style="display:grid;gap:10px">
+      <div><div class="row" style="justify-content:space-between"><b>価値作業</b><span id="vLabel">0%</span></div><div class="bar"><div class="fill" id="vBar"></div></div></div>
+      <div><div class="row" style="justify-content:space-between"><b>付随作業</b><span id="sLabel">0%</span></div><div class="bar"><div class="fill" id="sBar"></div></div></div>
+      <div><div class="row" style="justify-content:space-between"><b>ロス</b><span id="lLabel">0%</span></div><div class="bar"><div class="fill" id="lBar"></div></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">直近の観測</div>
+    <div class="history" id="history"></div>
+  </div>
+</div>
+
+<script>
+const workers=["作業者A","作業者B","作業者C","作業者D","作業者E","作業者F"];
+const categories=[
+ {type:"value",label:"切断・加工"},{type:"value",label:"溶接"},{type:"value",label:"組立・仮付け"},{type:"value",label:"仕上げ"},
+ {type:"support",label:"段取り"},{type:"support",label:"図面確認"},{type:"support",label:"測定・検査"},{type:"support",label:"材料・製品運搬"},{type:"support",label:"クレーン操作・反転"},
+ {type:"loss",label:"歩行"},{type:"loss",label:"材料・工具探し"},{type:"loss",label:"待ち"},{type:"loss",label:"手直し"},{type:"loss",label:"打合せ・指示確認"},{type:"loss",label:"その他"}
+];
+
+let data={events:[]};
+let timer=null, nextTimeout=null;
+const workerSel=document.getElementById("worker");
+workers.forEach(w=>{const o=document.createElement("option");o.value=w;o.textContent=w;workerSel.appendChild(o)});
+
+function saveLocal(){localStorage.setItem("dtekko_ws_pwa",JSON.stringify(data))}
+function countsFor(worker=null){
+ const ev=worker?data.events.filter(e=>e.worker===worker):data.events;
+ const out={total:ev.length,value:0,support:0,loss:0,items:{},ratingSum:0,ratingCount:0};
+ categories.forEach(c=>out.items[c.label]=0);
+ ev.forEach(e=>{
+  out[e.type]=(out[e.type]||0)+1;
+  out.items[e.label]=(out.items[e.label]||0)+1;
+  if(e.rating!=null){out.ratingSum+=Number(e.rating);out.ratingCount++}
+ });
+ return out;
+}
+function pct(n,d){return d?Math.round(n/d*100):0}
+
+function renderButtons(){
+ ["value","support","loss"].forEach(type=>{
+  const grid=document.getElementById(type+"Grid");grid.innerHTML="";
+  categories.filter(c=>c.type===type).forEach(c=>{
+   const b=document.createElement("button");b.className="workbtn "+type;
+   b.innerHTML=`${c.label}<span class="count" id="cnt-${CSS.escape(c.label)}">0回</span>`;
+   b.onclick=()=>addEvent(c);grid.appendChild(b);
+  });
+ });
+}
+function addEvent(c){
+ data.events.push({ts:new Date().toISOString(),worker:workerSel.value,type:c.type,label:c.label,rating:Number(document.getElementById("rating").value)});
+ saveLocal(); if(navigator.vibrate) navigator.vibrate(20); render();
+}
+function render(){
+ const all=countsFor();
+ total.textContent=all.total; valuePct.textContent=pct(all.value,all.total)+"%"; supportPct.textContent=pct(all.support,all.total)+"%"; lossPct.textContent=pct(all.loss,all.total)+"%";
+ avgRating.textContent=all.ratingCount?Math.round(all.ratingSum/all.ratingCount):100;
+ const vp=pct(all.value,all.total),sp=pct(all.support,all.total),lp=pct(all.loss,all.total);
+ [["v",vp],["s",sp],["l",lp]].forEach(([k,p])=>{document.getElementById(k+"Label").textContent=p+"%";document.getElementById(k+"Bar").style.width=p+"%"});
+ categories.forEach(c=>{const el=document.getElementById("cnt-"+CSS.escape(c.label));if(el)el.textContent=(all.items[c.label]||0)+"回"});
+ workerTable.innerHTML="";
+ workers.forEach(w=>{const c=countsFor(w),tr=document.createElement("tr"),avgR=c.ratingCount?Math.round(c.ratingSum/c.ratingCount):"-";tr.innerHTML=`<td>${w}</td><td>${c.total}</td><td>${pct(c.value,c.total)}%</td><td>${pct(c.support,c.total)}%</td><td>${pct(c.loss,c.total)}%</td><td>${avgR}</td>`;workerTable.appendChild(tr)});
+ history.innerHTML="";
+ data.events.slice(-30).reverse().forEach(e=>{const d=new Date(e.ts),div=document.createElement("div");div.className="history-item";div.innerHTML=`<span><b>${e.worker}</b>　${e.label}　R:${e.rating??"-"}</span><span class="small">${d.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>`;history.appendChild(div)});
+}
+undo.onclick=()=>{if(data.events.length){data.events.pop();saveLocal();render()}};
+resetWorker.onclick=()=>{const w=workerSel.value;if(confirm(`${w} のデータだけリセットしますか？`)){data.events=data.events.filter(e=>e.worker!==w);saveLocal();render()}};
+save.onclick=()=>{saveLocal();alert("保存しました")};
+csv.onclick=()=>{
+ const rows=[["日時","作業者","分類","作業項目","作業レーティング"]];
+ data.events.forEach(e=>rows.push([new Date(e.ts).toLocaleString("ja-JP"),e.worker,e.type,e.label,e.rating??""]));
+ const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+ const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="電機鉄工_ワークサンプリング.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
+function clearTiming(){if(timer)clearInterval(timer);if(nextTimeout)clearTimeout(nextTimeout);timer=null;nextTimeout=null}
+function notifyObservation(){nextObs.textContent="観測してください";if(navigator.vibrate)navigator.vibrate([100,80,100]);alert("観測タイミングです")}
+function scheduleRandom(){
+ clearTiming();
+ const [min,max]=randomRange.value.split(",").map(Number),sec=Math.floor(Math.random()*(max-min+1))+min,target=new Date(Date.now()+sec*1000);
+ nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+ nextTimeout=setTimeout(()=>{notifyObservation();scheduleRandom()},sec*1000);
+}
+function applyTiming(){
+ clearTiming();
+ const m=mode.value; interval.style.display=m==="fixed"?"inline-block":"none"; randomRange.style.display=m==="random"?"inline-block":"none";
+ if(m==="manual"){nextObs.textContent="手動"}
+ else if(m==="fixed"){const sec=Number(interval.value);let target=new Date(Date.now()+sec*1000);nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});timer=setInterval(()=>{notifyObservation();target=new Date(Date.now()+sec*1000);nextObs.textContent=target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"})},sec*1000)}
+ else scheduleRandom();
+}
+mode.onchange=applyTiming;interval.onchange=applyTiming;randomRange.onchange=applyTiming;
+
+try{const saved=localStorage.getItem("dtekko_ws_pwa");if(saved)data=JSON.parse(saved)}catch(e){}
+renderButtons();render();applyTiming();
+
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>

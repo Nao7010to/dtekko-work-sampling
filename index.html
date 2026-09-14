@@ -193,6 +193,23 @@ th:first-child,td:first-child{text-align:left}
   scroll-snap-align:start
 }
 
+
+.compare-unified-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff}
+.compare-unified{display:grid;width:max-content;min-width:100%;align-items:stretch}
+.compare-cell{box-sizing:border-box;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px;background:#fff;min-width:0;text-align:center}
+.compare-label{position:sticky;left:0;z-index:4;text-align:left;font-weight:800;background:#fff}
+.compare-corner{display:flex;align-items:center;justify-content:center;text-align:center;background:#f8fafc;color:#64748b;font-weight:900;min-height:250px}
+.compare-head{min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+.compare-head h3{font-size:16px;text-align:center;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.compare-head .obs{font-size:10px;color:var(--muted);margin-bottom:5px}
+.compare-head canvas{width:190px;height:180px;display:block}
+.compare-head .compare-legend{width:100%}
+.compare-group{font-weight:900;background:#f1f5f9!important;color:#334155}
+.compare-total{background:#f4faff!important;font-weight:900;border-left:2px solid #93c5fd}
+.compare-zero{color:#cbd5e1}
+@media(max-width:700px){.compare-head{min-height:245px}.compare-head canvas{width:180px;height:170px}}
+@media(orientation:landscape){.compare-head{min-height:235px}.compare-head canvas{width:170px;height:160px}}
+
 .compare-spacer{flex:0 0 150px;box-sizing:border-box;background:#f8fafc;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#64748b}
 .compare-unit.total-unit{background:#f4faff;border-color:#93c5fd}
 .compare-table th,.compare-table td{box-sizing:border-box}
@@ -452,19 +469,10 @@ th:first-child,td:first-child{text-align:left}
   </div>
 
   <div class="card compare-card">
-    <div class="section-title compare-title" id="compareChartTitle">工場別 作業構成</div>
-    <div class="compare-note">円グラフと下の詳細表は同じ列で揃い、横スクロールも連動します。右端に「工場全体」を表示します。</div>
-    <div class="compare-strip" id="compareStrip"></div>
-  </div>
-
-  <div class="card compare-card">
-    <div class="section-title compare-title" id="compareTableTitle">工場別 項目打点数</div>
-    <div class="compare-note">下の表で、差が生まれている具体的な作業項目を確認できます。</div>
-    <div class="compare-table-wrap">
-      <table class="compare-table">
-        <thead id="compareTableHead"></thead>
-        <tbody id="compareTableBody"></tbody>
-      </table>
+    <div class="section-title compare-title" id="compareChartTitle">工場別 作業構成・項目打点数</div>
+    <div class="compare-note">円グラフと詳細を1つの共通グリッドに統合しています。iPadの縦・横どちらでも同じ列で表示され、右端に「工場全体」を表示します。</div>
+    <div class="compare-unified-wrap">
+      <div class="compare-unified" id="compareUnified"></div>
     </div>
   </div>
 </section>
@@ -597,10 +605,8 @@ const els = {
   newWorkerName: document.getElementById("newWorkerName"),
   addFactoryBtn: document.getElementById("addFactoryBtn"),
   addWorkerBtn: document.getElementById("addWorkerBtn"),
-  compareStrip: document.getElementById("compareStrip"),
-  compareTableHead: document.getElementById("compareTableHead"),
-  compareTableBody: document.getElementById("compareTableBody"),
   compareChartTitle: document.getElementById("compareChartTitle"),
+  compareUnified: document.getElementById("compareUnified"),
   compareTableTitle: document.getElementById("compareTableTitle")
 };
 
@@ -1476,122 +1482,103 @@ function compareTargets(){
 }
 
 function renderComparison(){
-  if(!els.compareStrip) return;
-  const targets = compareTargets();
-  const unitLabel = compareMode === "factory" ? "工場" : "作業者";
-  els.compareChartTitle.textContent = unitLabel + "別 作業構成";
-  els.compareTableTitle.textContent = unitLabel + "別 項目打点数";
-  els.compareStrip.innerHTML = "";
+  if(!els.compareUnified) return;
+  const targets=compareTargets();
+  const unitLabel=compareMode==="factory"?"工場":"作業者";
+  els.compareChartTitle.textContent=unitLabel+"別 作業構成・項目打点数";
 
-  const spacer=document.createElement("div");
-  spacer.className="compare-spacer";
-  spacer.textContent="作業項目";
-  els.compareStrip.appendChild(spacer);
+  const grid=els.compareUnified;
+  grid.innerHTML="";
 
-  targets.forEach((t,idx)=>{
-    const st = calcStats(t.events);
-    const card = document.createElement("div");
-    card.className="compare-unit" + (t.isTotal ? " total-unit" : "");
-    const title=document.createElement("h3"); title.textContent=t.label;
-    const obs=document.createElement("div"); obs.className="obs"; obs.textContent="観測 "+st.total+"回";
-    const canvas=document.createElement("canvas"); canvas.className="compare-pie";
-    const legend=document.createElement("div"); legend.className="compare-legend";
-    legend.innerHTML =
+  if(!targets.length){
+    grid.style.gridTemplateColumns="1fr";
+    const empty=document.createElement("div");
+    empty.className="compare-cell";
+    empty.textContent="比較できるデータがありません。";
+    grid.appendChild(empty);
+    return;
+  }
+
+  const labelW=150;
+  const colW=220;
+  grid.style.gridTemplateColumns=labelW+"px repeat("+targets.length+", "+colW+"px)";
+
+  const corner=document.createElement("div");
+  corner.className="compare-cell compare-label compare-corner";
+  corner.textContent="作業項目";
+  grid.appendChild(corner);
+
+  targets.forEach(t=>{
+    const st=calcStats(t.events);
+    const head=document.createElement("div");
+    head.className="compare-cell compare-head"+(t.isTotal?" compare-total":"");
+
+    const title=document.createElement("h3");
+    title.textContent=t.label;
+    const obs=document.createElement("div");
+    obs.className="obs";
+    obs.textContent="観測 "+st.total+"回";
+    const canvas=document.createElement("canvas");
+    const legend=document.createElement("div");
+    legend.className="compare-legend";
+    legend.innerHTML=
       "<div><span>価値</span><b>"+pct(st.value,st.total)+"%</b></div>"+
       "<div><span>付帯</span><b>"+pct(st.support,st.total)+"%</b></div>"+
       "<div><span>ロス</span><b>"+pct(st.loss,st.total)+"%</b></div>";
-    card.append(title,obs,canvas,legend);
-    els.compareStrip.appendChild(card);
+
+    head.append(title,obs,canvas,legend);
+    grid.appendChild(head);
     requestAnimationFrame(()=>drawMiniPie(canvas,st));
   });
 
-  if(!targets.length){
-    els.compareStrip.innerHTML='<div class="small">比較できるデータがありません。</div>';
-  }
-
-  renderComparisonTable(targets);
-  syncCompareScroll();
-}
-
-
-let compareScrollSyncing=false;
-function syncCompareScroll(){
-  const strip=document.getElementById("compareStrip");
-  const tableWrap=document.querySelector("#page-compare .compare-table-wrap");
-  if(!strip || !tableWrap || strip.dataset.synced==="1") return;
-  strip.dataset.synced="1";
-
-  strip.addEventListener("scroll",()=>{
-    if(compareScrollSyncing) return;
-    compareScrollSyncing=true;
-    tableWrap.scrollLeft=strip.scrollLeft;
-    requestAnimationFrame(()=>compareScrollSyncing=false);
-  });
-
-  tableWrap.addEventListener("scroll",()=>{
-    if(compareScrollSyncing) return;
-    compareScrollSyncing=true;
-    strip.scrollLeft=tableWrap.scrollLeft;
-    requestAnimationFrame(()=>compareScrollSyncing=false);
-  });
-}
-
-function renderComparisonTable(targets){
-  els.compareTableHead.innerHTML="";
-  els.compareTableBody.innerHTML="";
-
-  const hr=document.createElement("tr");
-  const h0=document.createElement("th"); h0.textContent="作業項目"; hr.appendChild(h0);
-  targets.forEach(t=>{
-    const th=document.createElement("th");
-    th.textContent=t.label;
-    if(t.isTotal) th.className="total-col";
-    hr.appendChild(th);
-  });
-  els.compareTableHead.appendChild(hr);
-
-  const types=[
+  const groups=[
     {type:"value",label:"価値作業"},
     {type:"support",label:"付帯作業"},
     {type:"loss",label:"ロス作業"}
   ];
 
-  types.forEach(group=>{
-    const gr=document.createElement("tr"); gr.className="group-row";
-    const gd=document.createElement("td"); gd.textContent=group.label;
-    gr.appendChild(gd);
+  groups.forEach(group=>{
+    const groupLabel=document.createElement("div");
+    groupLabel.className="compare-cell compare-label compare-group";
+    groupLabel.textContent=group.label;
+    grid.appendChild(groupLabel);
+
     targets.forEach(t=>{
-      const st=calcStats(t.events); const td=document.createElement("td");
-      const n=st[group.type]; td.textContent=n+"件 ("+pct(n,st.total)+"%)";
-      if(t.isTotal) td.classList.add("total-col");
-      gr.appendChild(td);
+      const st=calcStats(t.events);
+      const n=st[group.type];
+      const cell=document.createElement("div");
+      cell.className="compare-cell compare-group"+(t.isTotal?" compare-total":"");
+      cell.textContent=n+"件 ("+pct(n,st.total)+"%)";
+      grid.appendChild(cell);
     });
-    els.compareTableBody.appendChild(gr);
 
     CATEGORIES.filter(c=>c.type===group.type).forEach(c=>{
-      const tr=document.createElement("tr");
-      const name=document.createElement("td"); name.textContent=c.label; tr.appendChild(name);
+      const label=document.createElement("div");
+      label.className="compare-cell compare-label";
+      label.textContent=c.label;
+      grid.appendChild(label);
+
       targets.forEach(t=>{
-        const n=t.events.filter(e=>e.type===c.type && e.label===c.label).length;
-        const td=document.createElement("td");
-        td.textContent=n;
-        if(!n)td.classList.add("zero");
-        if(t.isTotal)td.classList.add("total-col");
-        tr.appendChild(td);
+        const n=t.events.filter(e=>e.type===c.type&&e.label===c.label).length;
+        const cell=document.createElement("div");
+        cell.className="compare-cell"+(t.isTotal?" compare-total":"")+(n===0?" compare-zero":"");
+        cell.textContent=n;
+        grid.appendChild(cell);
       });
-      els.compareTableBody.appendChild(tr);
     });
   });
 
-  const total=document.createElement("tr"); total.className="group-row";
-  const td0=document.createElement("td");td0.textContent="観測数 合計";total.appendChild(td0);
+  const totalLabel=document.createElement("div");
+  totalLabel.className="compare-cell compare-label compare-group";
+  totalLabel.textContent="観測数 合計";
+  grid.appendChild(totalLabel);
+
   targets.forEach(t=>{
-    const td=document.createElement("td");
-    td.textContent=t.events.length+"件";
-    if(t.isTotal)td.classList.add("total-col");
-    total.appendChild(td);
+    const cell=document.createElement("div");
+    cell.className="compare-cell compare-group"+(t.isTotal?" compare-total":"");
+    cell.textContent=t.events.length+"件";
+    grid.appendChild(cell);
   });
-  els.compareTableBody.appendChild(total);
 }
 
 // events

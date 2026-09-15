@@ -53,6 +53,30 @@ select,input{width:100%;min-height:36px;border:1px solid var(--border);border-ra
 .work-item.support .add-btn{background:var(--support)}
 .work-item.loss .add-btn{background:var(--loss)}
 .count{display:block;color:var(--muted);font-size:12px;margin-top:3px;font-weight:700}
+.measure-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.measure-option{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:42px;border:1px solid var(--border);border-radius:10px;background:#f8fafc;padding:6px 9px}
+.measure-option span{font-size:11px;font-weight:800;color:#475569;white-space:nowrap}
+.measure-option select{width:auto;min-width:92px}
+.switch-input{width:22px;height:22px;min-height:22px;accent-color:#2f5bd8}
+body.button-size-small .work-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+body.button-size-small .work-item,body.button-size-small .add-btn{min-height:52px}
+body.button-size-small .add-btn{font-size:13px;padding-left:46px}
+body.button-size-small .minus-btn{left:5px;width:34px;height:38px;min-height:38px;font-size:21px}
+body.button-size-large .work-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+body.button-size-large .work-item,body.button-size-large .add-btn{min-height:76px}
+body.button-size-large .add-btn{font-size:17px;padding-left:58px}
+body.button-size-large .minus-btn{width:42px;height:52px;min-height:52px}
+.edit-dirty{background:#fff8d9!important;border-color:#eab308!important;box-shadow:0 0 0 2px rgba(234,179,8,.13)}
+button.edit-dirty{color:#713f12!important}
+.edit-saved{background:#dcfce7!important;border-color:#22c55e!important;color:#166534!important;box-shadow:0 0 0 2px rgba(34,197,94,.13)}
+@media(max-width:900px){
+  body.button-size-small .work-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  body.button-size-large .work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .measure-options{grid-template-columns:1fr}
+  body.button-size-small .work-grid,body.button-size-standard .work-grid,body.button-size-large .work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .action{min-height:36px;border:1px solid var(--border);background:#fff;border-radius:9px;padding:6px;font-size:11px;font-weight:800}
 .primary{background:#2f5bd8;color:#fff;border-color:#2f5bd8}
@@ -364,6 +388,11 @@ th:first-child,td:first-child{text-align:left}
         <option value="300,900">5〜15分</option>
         <option value="600,1200">10〜20分</option>
       </select>
+    </div>
+    <div class="measure-options">
+      <label class="measure-option"><span>ボタンサイズ</span><select id="buttonSizeSelect"><option value="small">小</option><option value="standard" selected>標準</option><option value="large">大</option></select></label>
+      <label class="measure-option"><span>タイマー通知音</span><input class="switch-input" type="checkbox" id="timerSoundToggle" checked></label>
+      <label class="measure-option"><span>測定中スリープ防止</span><input class="switch-input" type="checkbox" id="wakeLockToggle"></label>
     </div>
   </div>
 
@@ -829,6 +858,9 @@ const els = {
   ratingSelect: document.getElementById("ratingSelect"),
   modeSelect: document.getElementById("modeSelect"),
   timingSelect: document.getElementById("timingSelect"),
+  buttonSizeSelect: document.getElementById("buttonSizeSelect"),
+  timerSoundToggle: document.getElementById("timerSoundToggle"),
+  wakeLockToggle: document.getElementById("wakeLockToggle"),
   mTotal: document.getElementById("mTotal"),
   mValue: document.getElementById("mValue"),
   mSupport: document.getElementById("mSupport"),
@@ -916,6 +948,9 @@ let db = {
 let timerHandle = null;
 let paretoType = "ALL";
 let compareMode = "factory";
+let wakeLock = null;
+let pendingSavedEdit = null;
+let timerAudioContext = null;
 
 function makeId(){
   return "s_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
@@ -943,6 +978,9 @@ function makeSession(name){
       rating: "100",
       mode: "manual",
       timing: "30,60",
+      buttonSize: "standard",
+      timerSound: true,
+      preventSleep: false,
       paretoType: "ALL",
       compareMode: "factory"
     },
@@ -1026,6 +1064,9 @@ function ensureSessionIsolation(sess, legacy){
   if(!["50","80","100","120"].includes(String(sess.ui.rating))) sess.ui.rating="100";
   if(!["manual","fixed","random"].includes(sess.ui.mode)) sess.ui.mode="manual";
   if(!sess.ui.timing) sess.ui.timing="30,60";
+  if(!["small","standard","large"].includes(sess.ui.buttonSize)) sess.ui.buttonSize="standard";
+  if(typeof sess.ui.timerSound!=="boolean") sess.ui.timerSound=true;
+  if(typeof sess.ui.preventSleep!=="boolean") sess.ui.preventSleep=false;
   if(!["ALL","value","support","loss"].includes(sess.ui.paretoType)) sess.ui.paretoType="ALL";
   if(!["factory","worker"].includes(sess.ui.compareMode)) sess.ui.compareMode="factory";
 }
@@ -1185,6 +1226,83 @@ function avgRating(s){
   return s.ratingCount ? Math.round(s.ratingSum / s.ratingCount) : "-";
 }
 
+function applyButtonSize(size){
+  document.body.classList.remove("button-size-small","button-size-standard","button-size-large");
+  document.body.classList.add("button-size-"+(size||"standard"));
+}
+
+function playTimerSound(){
+  if(!currentSession().ui.timerSound) return;
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx) return;
+    const ctx=timerAudioContext||new AudioCtx();
+    timerAudioContext=ctx;
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.frequency.value=880;
+    gain.gain.setValueAtTime(.18,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.45);
+    osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.45);
+  }catch(e){}
+}
+
+function unlockTimerSound(){
+  if(!currentSession()?.ui?.timerSound) return;
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx) return;
+    if(!timerAudioContext) timerAudioContext=new AudioCtx();
+    if(timerAudioContext.state==="suspended") timerAudioContext.resume();
+  }catch(e){}
+}
+
+async function updateWakeLock(){
+  const shouldLock=currentSession()?.ui?.preventSleep && document.visibilityState==="visible" && document.getElementById("page-measure").classList.contains("active");
+  if(!shouldLock){
+    if(wakeLock){try{await wakeLock.release();}catch(e){} wakeLock=null;}
+    return;
+  }
+  if(wakeLock || !("wakeLock" in navigator)) return;
+  try{
+    wakeLock=await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release",()=>{wakeLock=null;});
+  }catch(e){}
+}
+
+function flashSaved(input,button){
+  input.classList.remove("edit-dirty");button.classList.remove("edit-dirty");
+  input.classList.add("edit-saved");button.classList.add("edit-saved");
+  setTimeout(()=>{input.classList.remove("edit-saved");button.classList.remove("edit-saved");},900);
+}
+
+function setupEditablePair(input,button,key){
+  const original=input.value;
+  input.addEventListener("input",()=>{
+    const dirty=input.value!==original;
+    input.classList.toggle("edit-dirty",dirty);
+    button.classList.toggle("edit-dirty",dirty);
+    input.classList.remove("edit-saved");button.classList.remove("edit-saved");
+  });
+  if(pendingSavedEdit===key){
+    pendingSavedEdit=null;
+    requestAnimationFrame(()=>flashSaved(input,button));
+  }
+}
+
+function setupStaticEditablePair(input,button){
+  input.addEventListener("input",()=>{
+    const dirty=input.value!==(input.dataset.savedValue??"");
+    input.classList.toggle("edit-dirty",dirty);button.classList.toggle("edit-dirty",dirty);
+    input.classList.remove("edit-saved");button.classList.remove("edit-saved");
+  });
+}
+
+function resetStaticEditablePair(input,button,value){
+  input.value=value;input.dataset.savedValue=value;
+  input.classList.remove("edit-dirty","edit-saved");button.classList.remove("edit-dirty","edit-saved");
+}
+
 function setOptions(select,items,includeAll,selectedValue){
   select.innerHTML="";
   if(includeAll){
@@ -1247,6 +1365,10 @@ function syncControlsFromSession(){
   els.ratingSelect.value=String(sess.ui.rating);
   els.modeSelect.value=sess.ui.mode;
   els.timingSelect.value=sess.ui.timing;
+  els.buttonSizeSelect.value=sess.ui.buttonSize;
+  els.timerSoundToggle.checked=sess.ui.timerSound;
+  els.wakeLockToggle.checked=sess.ui.preventSleep;
+  applyButtonSize(sess.ui.buttonSize);
   if(!els.timingSelect.value){
     els.timingSelect.selectedIndex=0;
     sess.ui.timing=els.timingSelect.value;
@@ -1767,7 +1889,7 @@ function renderSessions(){
     els.sessionList.appendChild(row);
   });
 
-  els.renameInput.value = currentSession().name;
+  resetStaticEditablePair(els.renameInput,els.renameBtn,currentSession().name);
 }
 
 function renderAll(){
@@ -1809,6 +1931,7 @@ function switchPage(pageName){
     setTimeout(renderComparison,250);
   }
   if(pageName === "info") renderInfo();
+  updateWakeLock();
 }
 
 function exportCSV(){
@@ -1852,6 +1975,7 @@ function scheduleTimer(){
   els.nextObs.textContent = target.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
 
   timerHandle = setTimeout(() => {
+    playTimerSound();
     alert("観測タイミングです");
     scheduleTimer();
   },sec*1000);
@@ -1891,7 +2015,7 @@ function addMaster(kind){
   masterLists(kind).active.push(name);
   input.value="";
   repairSessionUi();
-  saveDB();refreshSelectors();renderSettings();renderAll();
+  saveDB();renderAll();
 }
 
 function renameMaster(kind,oldName,newName){
@@ -1899,6 +2023,7 @@ function renameMaster(kind,oldName,newName){
   if(!newName||newName===oldName)return;
   if(nameExists(kind,newName,oldName)){alert("同じ名前がすでにあります");return;}
   const {active,inactive}=masterLists(kind);
+  pendingSavedEdit="master-"+kind+"-"+newName;
   const list=active.includes(oldName)?active:inactive;
   const i=list.indexOf(oldName);if(i>=0)list[i]=newName;
   currentSession().events.forEach(e=>{
@@ -1906,7 +2031,7 @@ function renameMaster(kind,oldName,newName){
     if(kind==="worker"&&e.worker===oldName)e.worker=newName;
   });
   repairSessionUi();
-  saveDB();refreshSelectors();renderSettings();renderAll();
+  saveDB();renderAll();
 }
 
 function masterObservationCount(kind,name){
@@ -1932,6 +2057,7 @@ function masterRow(kind,name,isActive){
   const input=document.createElement("input");input.value=name;
   const rename=document.createElement("button");rename.className="action";rename.textContent="変更";
   rename.addEventListener("click",()=>renameMaster(kind,name,input.value));
+  setupEditablePair(input,rename,"master-"+kind+"-"+name);
   const state=document.createElement("button");
   const n=masterObservationCount(kind,name);
   if(n===0){
@@ -1992,6 +2118,7 @@ function renameWorkItem(type,oldLabel,newLabel){
     return;
   }
   const sess=currentSession();
+  pendingSavedEdit="item-"+type+"-"+newLabel;
   const lists=[sess.categories||[],sess.inactiveCategories||[]];
   lists.forEach(list=>{
     const item=list.find(c=>c.type===type && c.label===oldLabel);
@@ -2002,8 +2129,6 @@ function renameWorkItem(type,oldLabel,newLabel){
   });
   sess.updated=new Date().toISOString();
   saveDB();
-  buildWorkButtons();
-  renderItemSettings();
   renderAll();
 }
 
@@ -2076,6 +2201,7 @@ function itemSettingRow(item,isActive){
   rename.className="action";
   rename.textContent="変更";
   rename.addEventListener("click",()=>renameWorkItem(item.type,item.label,input.value));
+  setupEditablePair(input,rename,"item-"+item.type+"-"+item.label);
 
   const state=document.createElement("button");
   const n=itemObservationCount(item.type,item.label);
@@ -2133,6 +2259,7 @@ function renameSelectedTemplate(){
   if(db.templates.some(x=>x.id!==t.id&&x.name===name)){alert("同じテンプレート名がすでにあります。");return;}
   if(!confirm("テンプレート「"+t.name+"」の名前を「"+name+"」へ変更しますか？"))return;
   t.name=name;saveDB();refreshTemplateSelect(t.id);
+  els.templateNameInput.dataset.savedValue=name;flashSaved(els.templateNameInput,els.renameTemplateBtn);
 }
 function overwriteSelectedTemplate(){
   const t=currentTemplate();if(!t)return;
@@ -2566,10 +2693,12 @@ els.newSessionBtn.addEventListener("click", () => {
 els.renameBtn.addEventListener("click", () => {
   const name = els.renameInput.value.trim();
   if(!name) return;
+  const changed=name!==currentSession().name;
   currentSession().name = name;
   currentSession().updated = new Date().toISOString();
   saveDB();
   renderAll();
+  if(changed) flashSaved(els.renameInput,els.renameBtn);
 });
 
 
@@ -2587,7 +2716,7 @@ els.clearBtn.addEventListener("click", () => {
 els.addFactoryBtn.addEventListener("click",()=>addMaster("factory"));
 els.addWorkerBtn.addEventListener("click",()=>addMaster("worker"));
 els.applyTemplateBtn.addEventListener("click", applySelectedTemplate);
-els.templateSelect.addEventListener("change",()=>{const t=currentTemplate();els.templateNameInput.value=t?t.name:"";});
+els.templateSelect.addEventListener("change",()=>{const t=currentTemplate();resetStaticEditablePair(els.templateNameInput,els.renameTemplateBtn,t?t.name:"");});
 els.renameTemplateBtn.addEventListener("click",renameSelectedTemplate);
 els.saveTemplateBtn.addEventListener("click",overwriteSelectedTemplate);
 els.addTemplateBtn.addEventListener("click",addTemplateFromCurrent);
@@ -2621,6 +2750,23 @@ els.modeSelect.addEventListener("change",()=>{
   saveDB();
   scheduleTimer();
 });
+els.buttonSizeSelect.addEventListener("change",()=>{
+  currentSession().ui.buttonSize=els.buttonSizeSelect.value;
+  applyButtonSize(els.buttonSizeSelect.value);
+  saveDB();
+  if(document.getElementById("page-summary").classList.contains("active")) renderSummary();
+  if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
+});
+els.timerSoundToggle.addEventListener("change",()=>{
+  currentSession().ui.timerSound=els.timerSoundToggle.checked;
+  saveDB();
+  if(els.timerSoundToggle.checked) unlockTimerSound();
+});
+els.wakeLockToggle.addEventListener("change",()=>{
+  currentSession().ui.preventSleep=els.wakeLockToggle.checked;
+  saveDB();
+  updateWakeLock();
+});
 els.timingSelect.addEventListener("change",()=>{
   currentSession().ui.timing=els.timingSelect.value;
   saveDB();
@@ -2641,6 +2787,8 @@ window.addEventListener("resize", () => {
   if(document.getElementById("page-summary").classList.contains("active")) renderSummary();
   if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
 });
+document.addEventListener("pointerdown",unlockTimerSound,{once:true});
+document.addEventListener("visibilitychange",updateWakeLock);
 
 // boot
 
@@ -2672,6 +2820,12 @@ function setupManageAccordion(){
 loadDB();
 setupManageAccordion();
 activateSession(db.currentId,{goMeasure:false});
+setupStaticEditablePair(els.renameInput,els.renameBtn);
+setupStaticEditablePair(els.templateNameInput,els.renameTemplateBtn);
+resetStaticEditablePair(els.renameInput,els.renameBtn,currentSession().name);
+const bootTemplate=currentTemplate();
+resetStaticEditablePair(els.templateNameInput,els.renameTemplateBtn,bootTemplate?bootTemplate.name:"");
+updateWakeLock();
 
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));

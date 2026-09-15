@@ -29,7 +29,7 @@ header{
 .header-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 h1{font-size:18px;margin:0}
 .session-label{font-size:11px;color:var(--muted);max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tabs{display:grid;grid-template-columns:repeat(5,minmax(92px,1fr));gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:1px}
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(92px,1fr)) 54px;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:1px}
 .tab{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 4px;font-weight:800;font-size:12px}
 .tab.active{background:#2f5bd8;color:#fff;border-color:#2f5bd8}
 .wrap{max-width:1180px;margin:auto;padding:8px}
@@ -53,10 +53,6 @@ select,input{width:100%;min-height:36px;border:1px solid var(--border);border-ra
 .work-item.support .add-btn{background:var(--support)}
 .work-item.loss .add-btn{background:var(--loss)}
 .count{display:block;color:var(--muted);font-size:12px;margin-top:3px;font-weight:700}
-.measure-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
-.measure-option{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:42px;border:1px solid var(--border);border-radius:10px;background:#f8fafc;padding:6px 9px}
-.measure-option span{font-size:11px;font-weight:800;color:#475569;white-space:nowrap}
-.measure-option select{width:auto;min-width:92px}
 .switch-input{width:22px;height:22px;min-height:22px;accent-color:#2f5bd8}
 body.button-size-small .work-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
 body.button-size-small .work-item,body.button-size-small .add-btn{min-height:52px}
@@ -74,9 +70,14 @@ button.edit-dirty{color:#713f12!important}
   body.button-size-large .work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:560px){
-  .measure-options{grid-template-columns:1fr}
   body.button-size-small .work-grid,body.button-size-standard .work-grid,body.button-size-large .work-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+.options-hero{background:linear-gradient(135deg,#172033,#334155);color:#fff;border-radius:18px;padding:20px 22px;margin-bottom:10px}
+.options-hero h2{font-size:26px;margin:4px 0 5px}.options-hero p{font-size:12px;opacity:.82;margin:0}
+.option-list{display:grid;gap:9px}.option-row{display:grid;grid-template-columns:minmax(180px,1fr) minmax(150px,260px);gap:16px;align-items:center;border-bottom:1px solid var(--border);padding:10px 2px}
+.option-row:last-child{border-bottom:0}.option-copy b{display:block;font-size:13px}.option-copy span{display:block;font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+.option-control{display:flex;justify-content:flex-end;align-items:center}.option-control select{max-width:260px}.option-control .switch-input{width:24px}
+@media(max-width:560px){.tabs{grid-template-columns:repeat(5,minmax(84px,1fr)) 48px}.option-row{grid-template-columns:1fr}.option-control{justify-content:flex-start}.option-control select{max-width:none}}
 .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .action{min-height:36px;border:1px solid var(--border);background:#fff;border-radius:9px;padding:6px;font-size:11px;font-weight:800}
 .primary{background:#2f5bd8;color:#fff;border-color:#2f5bd8}
@@ -361,6 +362,7 @@ th:first-child,td:first-child{text-align:left}
     <button class="tab" data-page="compare">全体比較</button>
     <button class="tab" data-page="data">データ管理</button>
     <button class="tab" data-page="info">WS情報</button>
+    <button class="tab" data-page="options" aria-label="オプション" title="オプション">⚙</button>
   </div>
 </header>
 
@@ -388,11 +390,6 @@ th:first-child,td:first-child{text-align:left}
         <option value="300,900">5〜15分</option>
         <option value="600,1200">10〜20分</option>
       </select>
-    </div>
-    <div class="measure-options">
-      <label class="measure-option"><span>ボタンサイズ</span><select id="buttonSizeSelect"><option value="small">小</option><option value="standard" selected>標準</option><option value="large">大</option></select></label>
-      <label class="measure-option"><span>タイマー通知音</span><input class="switch-input" type="checkbox" id="timerSoundToggle" checked></label>
-      <label class="measure-option"><span>測定中スリープ防止</span><input class="switch-input" type="checkbox" id="wakeLockToggle"></label>
     </div>
   </div>
 
@@ -757,6 +754,26 @@ th:first-child,td:first-child{text-align:left}
   </div>
 </section>
 
+<section class="page" id="page-options">
+  <div class="options-hero">
+    <div class="compare-kicker">APP SETTINGS</div>
+    <h2>⚙ オプション</h2>
+    <p>画面表示と操作方法を、この端末に保存します。</p>
+  </div>
+  <div class="card">
+    <div class="section-title">表示・操作</div>
+    <div class="option-list">
+      <label class="option-row"><span class="option-copy"><b>測定ボタンのサイズ</b><span>グラフや詳細画面の配置には影響しません。</span></span><span class="option-control"><select id="buttonSizeSelect"><option value="small">コンパクト</option><option value="standard" selected>標準</option><option value="large">大きめ</option></select></span></label>
+      <label class="option-row"><span class="option-copy"><b>ボタンのクリック音</b><span>ボタンを押したことを音で確認できます。</span></span><span class="option-control"><input class="switch-input" type="checkbox" id="clickSoundToggle"></span></label>
+      <label class="option-row"><span class="option-copy"><b>クリック音の対象</b><span>測定ボタンだけ、またはすべてのボタンを選べます。</span></span><span class="option-control"><select id="clickSoundScope"><option value="measure">測定ボタンのみ</option><option value="all">すべてのボタン</option></select></span></label>
+      <label class="option-row"><span class="option-copy"><b>タイマー通知音</b><span>観測タイミングを音とメッセージで知らせます。</span></span><span class="option-control"><input class="switch-input" type="checkbox" id="timerSoundToggle" checked></span></label>
+      <label class="option-row"><span class="option-copy"><b>測定中の画面スリープ防止</b><span>測定画面を開いている間、対応端末で画面消灯を防ぎます。</span></span><span class="option-control"><input class="switch-input" type="checkbox" id="wakeLockToggle"></span></label>
+      <label class="option-row"><span class="option-copy"><b>起動時の画面</b><span>アプリを開いたときに最初に表示する画面です。</span></span><span class="option-control"><select id="initialPageSelect"><option value="measure">測定</option><option value="summary">集計・グラフ</option><option value="compare">全体比較</option><option value="data">データ管理</option><option value="info">WS情報</option></select></span></label>
+    </div>
+  </div>
+  <div class="auto-save-status"><span class="auto-save-dot"></span>オプションはこの端末に自動保存されます</div>
+</section>
+
 </div>
 <div class="busy-overlay" id="busyOverlay"><div class="busy-box" id="busyText">出力中…</div></div>
 
@@ -859,8 +876,11 @@ const els = {
   modeSelect: document.getElementById("modeSelect"),
   timingSelect: document.getElementById("timingSelect"),
   buttonSizeSelect: document.getElementById("buttonSizeSelect"),
+  clickSoundToggle: document.getElementById("clickSoundToggle"),
+  clickSoundScope: document.getElementById("clickSoundScope"),
   timerSoundToggle: document.getElementById("timerSoundToggle"),
   wakeLockToggle: document.getElementById("wakeLockToggle"),
+  initialPageSelect: document.getElementById("initialPageSelect"),
   mTotal: document.getElementById("mTotal"),
   mValue: document.getElementById("mValue"),
   mSupport: document.getElementById("mSupport"),
@@ -990,6 +1010,17 @@ function makeSession(name){
 
 function saveDB(){
   localStorage.setItem(STORE_KEY, JSON.stringify(db));
+}
+
+function ensureAppOptions(){
+  const legacy=(db.sessions&&db.currentId&&db.sessions[db.currentId]?.ui)||{};
+  if(!db.options||typeof db.options!=="object") db.options={};
+  if(!["small","standard","large"].includes(db.options.buttonSize)) db.options.buttonSize=legacy.buttonSize||"standard";
+  if(typeof db.options.clickSound!=="boolean") db.options.clickSound=false;
+  if(!["measure","all"].includes(db.options.clickSoundScope)) db.options.clickSoundScope="measure";
+  if(typeof db.options.timerSound!=="boolean") db.options.timerSound=typeof legacy.timerSound==="boolean"?legacy.timerSound:true;
+  if(typeof db.options.preventSleep!=="boolean") db.options.preventSleep=typeof legacy.preventSleep==="boolean"?legacy.preventSleep:false;
+  if(!["measure","summary","compare","data","info"].includes(db.options.initialPage)) db.options.initialPage="measure";
 }
 
 function ensureSessionIsolation(sess, legacy){
@@ -1125,6 +1156,7 @@ function loadDB(){
   if(!db.currentId || !db.sessions[db.currentId]){
     db.currentId=Object.keys(db.sessions)[0];
   }
+  ensureAppOptions();
 
   // V19: shared masters are deliberately removed.
   // From here on, factories/workers/categories/UI settings exist only inside each session.
@@ -1232,7 +1264,7 @@ function applyButtonSize(size){
 }
 
 function playTimerSound(){
-  if(!currentSession().ui.timerSound) return;
+  if(!db.options.timerSound) return;
   try{
     const AudioCtx=window.AudioContext||window.webkitAudioContext;
     if(!AudioCtx) return;
@@ -1248,7 +1280,7 @@ function playTimerSound(){
 }
 
 function unlockTimerSound(){
-  if(!currentSession()?.ui?.timerSound) return;
+  if(!db.options?.timerSound && !db.options?.clickSound) return;
   try{
     const AudioCtx=window.AudioContext||window.webkitAudioContext;
     if(!AudioCtx) return;
@@ -1258,7 +1290,7 @@ function unlockTimerSound(){
 }
 
 async function updateWakeLock(){
-  const shouldLock=currentSession()?.ui?.preventSleep && document.visibilityState==="visible" && document.getElementById("page-measure").classList.contains("active");
+  const shouldLock=db.options?.preventSleep && document.visibilityState==="visible" && document.getElementById("page-measure").classList.contains("active");
   if(!shouldLock){
     if(wakeLock){try{await wakeLock.release();}catch(e){} wakeLock=null;}
     return;
@@ -1267,6 +1299,19 @@ async function updateWakeLock(){
   try{
     wakeLock=await navigator.wakeLock.request("screen");
     wakeLock.addEventListener("release",()=>{wakeLock=null;});
+  }catch(e){}
+}
+
+function playClickSound(){
+  if(!db.options?.clickSound) return;
+  try{
+    unlockTimerSound();
+    if(!timerAudioContext) return;
+    const osc=timerAudioContext.createOscillator();
+    const gain=timerAudioContext.createGain();
+    osc.frequency.value=520;gain.gain.setValueAtTime(.08,timerAudioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,timerAudioContext.currentTime+.07);
+    osc.connect(gain);gain.connect(timerAudioContext.destination);osc.start();osc.stop(timerAudioContext.currentTime+.07);
   }catch(e){}
 }
 
@@ -1365,10 +1410,15 @@ function syncControlsFromSession(){
   els.ratingSelect.value=String(sess.ui.rating);
   els.modeSelect.value=sess.ui.mode;
   els.timingSelect.value=sess.ui.timing;
-  els.buttonSizeSelect.value=sess.ui.buttonSize;
-  els.timerSoundToggle.checked=sess.ui.timerSound;
-  els.wakeLockToggle.checked=sess.ui.preventSleep;
-  applyButtonSize(sess.ui.buttonSize);
+  ensureAppOptions();
+  els.buttonSizeSelect.value=db.options.buttonSize;
+  els.clickSoundToggle.checked=db.options.clickSound;
+  els.clickSoundScope.value=db.options.clickSoundScope;
+  els.clickSoundScope.disabled=!db.options.clickSound;
+  els.timerSoundToggle.checked=db.options.timerSound;
+  els.wakeLockToggle.checked=db.options.preventSleep;
+  els.initialPageSelect.value=db.options.initialPage;
+  applyButtonSize(db.options.buttonSize);
   if(!els.timingSelect.value){
     els.timingSelect.selectedIndex=0;
     sess.ui.timing=els.timingSelect.value;
@@ -1920,6 +1970,11 @@ function renderInfo(){
 }
 
 function switchPage(pageName){
+  const current=document.querySelector(".page.active");
+  const destination=document.getElementById("page-"+pageName);
+  if(!destination || current===destination) return true;
+  if(current?.querySelector(".edit-dirty") && !confirm("変更ボタンを押していない編集内容があります。\n反映せずに移動しますか？")) return false;
+  if(current?.querySelector(".edit-dirty")) renderAll();
   document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-"+pageName));
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.page === pageName));
   if(pageName === "summary"){
@@ -1932,6 +1987,7 @@ function switchPage(pageName){
   }
   if(pageName === "info") renderInfo();
   updateWakeLock();
+  return true;
 }
 
 function exportCSV(){
@@ -2751,21 +2807,33 @@ els.modeSelect.addEventListener("change",()=>{
   scheduleTimer();
 });
 els.buttonSizeSelect.addEventListener("change",()=>{
-  currentSession().ui.buttonSize=els.buttonSizeSelect.value;
+  db.options.buttonSize=els.buttonSizeSelect.value;
   applyButtonSize(els.buttonSizeSelect.value);
   saveDB();
   if(document.getElementById("page-summary").classList.contains("active")) renderSummary();
   if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
 });
 els.timerSoundToggle.addEventListener("change",()=>{
-  currentSession().ui.timerSound=els.timerSoundToggle.checked;
+  db.options.timerSound=els.timerSoundToggle.checked;
   saveDB();
   if(els.timerSoundToggle.checked) unlockTimerSound();
 });
 els.wakeLockToggle.addEventListener("change",()=>{
-  currentSession().ui.preventSleep=els.wakeLockToggle.checked;
+  db.options.preventSleep=els.wakeLockToggle.checked;
   saveDB();
   updateWakeLock();
+});
+els.clickSoundToggle.addEventListener("change",()=>{
+  db.options.clickSound=els.clickSoundToggle.checked;
+  els.clickSoundScope.disabled=!db.options.clickSound;
+  saveDB();
+  if(db.options.clickSound) unlockTimerSound();
+});
+els.clickSoundScope.addEventListener("change",()=>{
+  db.options.clickSoundScope=els.clickSoundScope.value;saveDB();
+});
+els.initialPageSelect.addEventListener("change",()=>{
+  db.options.initialPage=els.initialPageSelect.value;saveDB();
 });
 els.timingSelect.addEventListener("change",()=>{
   currentSession().ui.timing=els.timingSelect.value;
@@ -2788,6 +2856,10 @@ window.addEventListener("resize", () => {
   if(document.getElementById("page-compare").classList.contains("active")) renderComparison();
 });
 document.addEventListener("pointerdown",unlockTimerSound,{once:true});
+document.addEventListener("click",e=>{
+  const button=e.target.closest("button");if(!button||!db.options?.clickSound)return;
+  if(db.options.clickSoundScope==="all" || button.matches(".add-btn,.minus-btn")) playClickSound();
+});
 document.addEventListener("visibilitychange",updateWakeLock);
 
 // boot
@@ -2825,6 +2897,7 @@ setupStaticEditablePair(els.templateNameInput,els.renameTemplateBtn);
 resetStaticEditablePair(els.renameInput,els.renameBtn,currentSession().name);
 const bootTemplate=currentTemplate();
 resetStaticEditablePair(els.templateNameInput,els.renameTemplateBtn,bootTemplate?bootTemplate.name:"");
+switchPage(db.options.initialPage);
 updateWakeLock();
 
 if("serviceWorker" in navigator){

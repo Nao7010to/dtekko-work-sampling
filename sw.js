@@ -1,4 +1,4 @@
-const CACHE="work-sampling-v22";
+const CACHE="work-sampling-v23";
 const ASSETS=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install",event=>{
